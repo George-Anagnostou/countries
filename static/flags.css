@@ -1,0 +1,46 @@
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 100%;
+  width: 150px;
+}
+
+#country-container {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+    width: auto;
+}
+
+#fetch-continents-form {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.country-item {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: top;
+    align-items: center;
+    background: #ccc;
+}
+
+.country-item .country-flag-icon {
+    padding-top: 5px;
+}
+
+.country-item .country-name {
+    padding: 5px;
+    text-align: center;
+}
+
+.country-item .country-population {
+    padding: 5px;
+    text-align: center;
+}
+

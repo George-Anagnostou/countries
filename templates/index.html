@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Country Guesser</title>
+        <link rel="stylesheet" href="{{ url_for("static", filename="flags.css") }}">
+    </head>
+    <body>
+        <h1>Country Guesser</h1>
+        <h2>Search By Continent</h2>
+        <form id="fetch-continents-form">
+            <fieldset>
+                <legend>Search the Countries</legend>
+
+                <label for="continent">Continent</label>
+                <input type="text" id="continent" name="continent" />
+                <label for="sort-method">Sort by</label>
+                <select name="sort-method" id="sort-method">
+                    <option value="alpha">Alphabetically (by common name)</option>
+                    <option value="pop">Population</option>
+                </select>
+                <input type="submit" value="Search Continents" />
+
+            </fieldset>
+        </form>
+        <div id="country-container"></div>
+    </body>
+    <script src="{{ url_for("static", filename="main.js") }}"></script>
+</html>
