@@ -22,7 +22,14 @@ def get_data():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    countries = get_data()
+    continents = []
+    for country in countries:
+        for continent in country["continents"]:
+            if continent not in continents:
+                continents.append(continent)
+
+    return render_template("index.html", continents=continents)
 
 @app.route("/continents", methods=["POST"])
 def continents():
@@ -36,7 +43,6 @@ def continents():
         for country in data:
             if request.form["continent"] in country["continents"]:
                 matched_data.append(country)
-                print(country)
         return matched_data
 
 if __name__ == "__main__":
