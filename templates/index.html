@@ -2,7 +2,7 @@
 <html>
     <head>
         <title>Country Guesser</title>
-        <link rel="stylesheet" href="{{ url_for("static", filename="flags.css") }}">
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/flags.css") }}">
     </head>
     <body>
         <h1>Country Guesser</h1>
@@ -29,5 +29,5 @@
         </search>
         <div id="country-container"></div>
     </body>
-    <script src="{{ url_for("static", filename="main.js") }}"></script>
+    <script type="module" src="{{ url_for("static", filename="js/main.js") }}"></script>
 </html>

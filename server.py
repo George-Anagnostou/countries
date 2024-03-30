@@ -2,8 +2,15 @@ from flask import Flask
 from flask import render_template
 from flask import request
 import json
+import random
+
+HOST = "localhost"
 
 app = Flask(__name__)
+app.config["MIME_TYPES"] = {
+    ".js": "application/javascript",
+}
+
 
 def get_data():
     try:
@@ -20,6 +27,7 @@ def get_data():
         print("Local data not found, requesting from API...")
         return data
 
+
 @app.route("/")
 def index():
     countries = get_data()
@@ -30,6 +38,7 @@ def index():
                 continents.append(continent)
 
     return render_template("index.html", continents=continents)
+
 
 @app.route("/continents", methods=["POST"])
 def continents():
@@ -45,6 +54,22 @@ def continents():
                 matched_data.append(country)
         return matched_data
 
-if __name__ == "__main__":
-    app.run(port=8000, debug=True)
 
+@app.route("/guesser")
+def guesser():
+    data = get_data()
+    countries = []
+    for country in data:
+        countries.append(country["name"]["common"])
+    if request.method == "GET":
+        return render_template("guesser.html", countries=countries)
+
+
+@app.route("/country")
+def get_country():
+    data = get_data()
+    return random.choice(data)
+
+
+if __name__ == "__main__":
+    app.run(port=8000, debug=True, host=HOST)

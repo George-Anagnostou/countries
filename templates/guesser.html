@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Country Guesser</title>
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/flags.css") }}">
+    </head>
+    <body>
+        <h1>Guess the Country</h1>
+        <div id="country-container"></div>
+        <search>
+            <fieldset>
+                <legend>Guess the Country</legend>
+                <form id="guess-country-form">
+                    <label for="country-guess">Country</label>
+                    <input type="text" id="country-guess" name="country-guess" list="country-list"/>
+                    <datalist id="country-list">
+                        {% for country in countries %}
+                        <option value="{{ country }}"></option>
+                        {% endfor %}
+                    </datalist>
+                    <input type="submit" value="Submit Guess"/>
+                </form>
+            </fieldset>
+        </search>
+        <div id="result-container"></div>
+    </body>
+    <script type="module" src="{{ url_for("static", filename="js/guesser.js") }}"></script>
+</html>
