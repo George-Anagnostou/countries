@@ -1,4 +1,4 @@
-export function generateFlagHTML(country) {
+export function generateCountryCard(country) {
     return `
         <div class="country-item">
             <i class="country-flag-icon">
@@ -16,6 +16,19 @@ export function generateFlagHTML(country) {
         </div>
     `
 };
+
+export function generateCountryCardPartial(country) {
+    return `
+        <div class="country-item">
+            <i class="country-flag-icon">
+                ${country.flag}
+            </i>
+            <p class="country-population">
+                Population: ${country.population.toLocaleString()}
+            </p>
+        </div>
+    `
+}
 
 export async function fetchCountryData(formData) {
     try {

@@ -44,3 +44,14 @@ textarea {
     text-align: center;
 }
 
+form {
+    max-width: 400px;
+    margin: 0;
+    padding: 20px;
+    border: 1px solid #ccc;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+}

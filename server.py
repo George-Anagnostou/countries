@@ -18,7 +18,7 @@ def get_data():
             data = json.load(f)
         print("Loading local data...")
         return data
-    except:
+    except Exception:
         import requests
         r = requests.get("https://restcountries.com/v3.1/all")
         data = r.json()
@@ -28,22 +28,37 @@ def get_data():
         return data
 
 
+initial_data = get_data()
+
+
+flag_emojis = []
+for country in initial_data:
+    flag_emojis.append(country["flag"])
+
+
+def get_random_flag_emoji(flag_emojis):
+    return random.choice(flag_emojis)
+
+
 @app.route("/")
 def index():
-    countries = get_data()
+    countries = initial_data
     continents = []
     for country in countries:
         for continent in country["continents"]:
             if continent not in continents:
                 continents.append(continent)
 
-    return render_template("index.html", continents=continents)
+    emoji = get_random_flag_emoji(flag_emojis)
+    return render_template(
+        "index.html", continents=continents, flag_emoji=emoji
+    )
 
 
 @app.route("/continents", methods=["POST"])
 def continents():
     if request.method == "POST":
-        data = get_data()
+        data = initial_data
 
         if request.form["continent"].lower() == "all":
             return data
@@ -57,17 +72,20 @@ def continents():
 
 @app.route("/guesser")
 def guesser():
-    data = get_data()
+    data = initial_data
     countries = []
     for country in data:
         countries.append(country["name"]["common"])
     if request.method == "GET":
-        return render_template("guesser.html", countries=countries)
+        emoji = get_random_flag_emoji(flag_emojis)
+        return render_template(
+            "guesser.html", countries=countries, flag_emoji=emoji
+        )
 
 
 @app.route("/country")
 def get_country():
-    data = get_data()
+    data = initial_data
     return random.choice(data)
 
 

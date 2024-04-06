@@ -1,8 +1,9 @@
-import { fetchSingleCountry } from "./utils.js";
+import { fetchSingleCountry, generateCountryCard, generateCountryCardPartial } from "./utils.js";
 
 const targetCountryContainer = document.getElementById("country-container");
 const form = document.getElementById("guess-country-form");
 const resultContainer = document.getElementById("result-container");
+const next = document.getElementById("next-guess");
 
 let singleCountryData;
 
@@ -12,28 +13,11 @@ function getCountryGuess(formData) {
 }
 
 function isCorrectGuess(countryGuess, countryTarget) {
-    if (countryGuess.toLowerCase() === countryTarget.toLowerCase()) {
-        return true;
-    } else {
-        return false;
-    }
+    return countryGuess.toLowerCase() === countryTarget.toLowerCase()
 }
 
 function displayTargetCountry(targetCountryContainer, targetCountry) {
-    targetCountryContainer.innerHTML = generateSingleFlagHTML(targetCountry);
-}
-
-function generateSingleFlagHTML(country) {
-    return `
-        <div class="country-item">
-            <i class="country-flag-icon">
-                ${country.flag}
-            </i>
-            <p class="country-population">
-                Population: ${country.population.toLocaleString()}
-            </p>
-        </div>
-    `
+    targetCountryContainer.innerHTML = generateCountryCardPartial(targetCountry);
 }
 
 document.addEventListener("DOMContentLoaded", async (e) => {
@@ -46,19 +30,19 @@ form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const countryGuess = getCountryGuess(formData);
-    console.log(countryGuess);
-    console.log(singleCountryData.name.common);
-    if (isCorrectGuess(countryGuess, singleCountryData.name.common)) {
-        resultContainer.innerHTML = `
-            <p>Right!</p>
-        `;
-    } else {
-        resultContainer.innerHTML = `
-            <p>Wrong!</p>
-            <p>The right answer was ${singleCountryData.name.common}</p>
-        `;
-    }
+    const result = isCorrectGuess(countryGuess, singleCountryData.name.common)
+                    ? "Correct!"
+                    : "Wrong!"
+    resultContainer.innerHTML = `<p>${result}</p>`
+    targetCountryContainer.innerHTML = generateCountryCard(singleCountryData);
+    next.focus();
+});
 
+next.addEventListener("click", async (e) => {
+    e.preventDefault();
+    resultContainer.innerHTML = "";
     singleCountryData = await fetchSingleCountry();
     displayTargetCountry(targetCountryContainer, singleCountryData);
+    form.elements["country-guess"].value = "";
+    form.elements["country-guess"].select();
 });

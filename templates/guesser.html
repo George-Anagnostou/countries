@@ -3,10 +3,18 @@
     <head>
         <title>Country Guesser</title>
         <link rel="stylesheet" href="{{ url_for("static", filename="css/flags.css") }}">
+        <link
+            rel="icon"
+            href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22>
+            <text y=%22.9em%22 font-size=%2290%22>
+            {{ flag_emoji }}
+            </text></svg>"
+        >
     </head>
     <body>
         <h1>Guess the Country</h1>
         <div id="country-container"></div>
+        <div id="result-container"></div>
         <search>
             <fieldset>
                 <legend>Guess the Country</legend>
@@ -19,10 +27,10 @@
                         {% endfor %}
                     </datalist>
                     <input type="submit" value="Submit Guess"/>
+                    <button id="next-guess" type="button">Next Guess</button>
                 </form>
             </fieldset>
         </search>
-        <div id="result-container"></div>
     </body>
     <script type="module" src="{{ url_for("static", filename="js/guesser.js") }}"></script>
 </html>

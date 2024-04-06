@@ -1,4 +1,4 @@
-import { generateFlagHTML, fetchCountryData } from "./utils.js";
+import { generateCountryCard, fetchCountryData } from "./utils.js";
 
 const form = document.getElementById("fetch-continents-form");
 const formSort = document.getElementById("sort-method");
@@ -6,7 +6,7 @@ const countryContainer = document.querySelector("#country-container");
 
 async function displayCountryData(data) {
     const countryItems = data.reduce((acc, curr) => {
-        return acc += generateFlagHTML(curr)
+        return acc += generateCountryCard(curr)
     },'')
 
     countryContainer.innerHTML = countryItems
