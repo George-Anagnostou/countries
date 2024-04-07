@@ -65,12 +65,14 @@ def continents():
     if request.method == "POST":
         data = initial_data
 
-        if request.form["continent"].lower() == "all":
+        if request.form["continent"].lower() == "all" or \
+           request.form["continent"].lower() == "":
             return data
 
         matched_data = []
         for country in data:
-            if request.form["continent"] in country["continents"]:
+            if request.form["continent"].lower() in \
+               [continent.lower() for continent in country["continents"]]:
                 matched_data.append(country)
         return matched_data
 

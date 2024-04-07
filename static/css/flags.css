@@ -47,6 +47,7 @@ nav li:not(:last-child)::after {
 
 .country-item .country-flag-icon {
     padding-top: 5px;
+    font-size: 3em;
 }
 
 .country-item .country-name {
