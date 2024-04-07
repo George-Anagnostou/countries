@@ -42,6 +42,11 @@ def get_random_flag_emoji(flag_emojis):
 
 @app.route("/")
 def index():
+    return render_template("home.html")
+
+
+@app.route("/search_continents")
+def search_continents():
     countries = initial_data
     continents = []
     for country in countries:
@@ -51,7 +56,7 @@ def index():
 
     emoji = get_random_flag_emoji(flag_emojis)
     return render_template(
-        "index.html", continents=continents, flag_emoji=emoji
+        "search_continents.html", continents=continents, flag_emoji=emoji
     )
 
 
