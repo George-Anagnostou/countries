@@ -32,7 +32,7 @@ export function generateCountryCardPartial(country) {
 
 export async function fetchCountryData(formData) {
     try {
-        const response = await fetch("http://localhost:8000/continents", {
+        const response = await fetch("http://localhost:8000/search_continents", {
             method: "POST",
             body: formData,
         });

@@ -45,23 +45,20 @@ def index():
     return render_template("home.html")
 
 
-@app.route("/search_continents")
+@app.route("/search_continents", methods=["GET", "POST"])
 def search_continents():
-    countries = initial_data
-    continents = []
-    for country in countries:
-        for continent in country["continents"]:
-            if continent not in continents:
-                continents.append(continent)
+    if request.method == "GET":
+        countries = initial_data
+        continents = []
+        for country in countries:
+            for continent in country["continents"]:
+                if continent not in continents:
+                    continents.append(continent)
 
-    emoji = get_random_flag_emoji(flag_emojis)
-    return render_template(
-        "search_continents.html", continents=continents, flag_emoji=emoji
-    )
-
-
-@app.route("/continents", methods=["POST"])
-def continents():
+        emoji = get_random_flag_emoji(flag_emojis)
+        return render_template(
+            "search_continents.html", continents=continents, flag_emoji=emoji
+        )
     if request.method == "POST":
         data = initial_data
 
@@ -77,7 +74,7 @@ def continents():
         return matched_data
 
 
-@app.route("/guesser")
+@app.route("/country_guesser")
 def guesser():
     data = initial_data
     countries = []
@@ -86,8 +83,25 @@ def guesser():
     if request.method == "GET":
         emoji = get_random_flag_emoji(flag_emojis)
         return render_template(
-            "guesser.html", countries=countries, flag_emoji=emoji
+            "country_guesser.html", countries=countries, flag_emoji=emoji
         )
+
+
+@app.route("/capital_guesser")
+def capital_guesser():
+    data = initial_data
+    capitals = []
+    for country in data:
+        try:
+            for capital in country["capital"]:
+                capitals.append(capital)
+        except KeyError:
+            capitals.append("None")
+
+    emoji = get_random_flag_emoji(flag_emojis)
+    return render_template(
+        "capital_guesser.html", capitals=capitals, flag_emoji=emoji
+    )
 
 
 @app.route("/country")
