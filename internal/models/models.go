@@ -61,6 +61,10 @@ func GetFlagEmoji() string {
 	return randFlag
 }
 
+func GetRandomCountry() *CountryData {
+    return &Countries[rand.Intn(len(Countries))]
+}
+
 func CountriesByName(slice []CountryData) {
     sort.Slice(slice, func(i, j int) bool {
         return slice[i].Name.CommonName < slice[j].Name.CommonName
@@ -83,4 +87,13 @@ func CountriesByPopReverse(slice []CountryData) {
     sort.Slice(slice, func(i, j int) bool {
         return slice[i].Population > slice[j].Population
     })
+}
+
+func GetCountryByName(name string) *CountryData {
+    for _, country := range Countries {
+        if name == country.Name.CommonName {
+            return &country
+        }
+    }
+    return nil
 }

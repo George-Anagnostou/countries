@@ -1,0 +1,43 @@
+{{ block "guess_countries" . }}
+<!DOCTYPE html>
+    <html>
+    {{ template "header" . }}
+    <body>
+        <h2>Guess the Country</h2>
+        {{ template "nav" }}
+        <main>
+            <div id="result-container">
+                <div>{{ .Payload.AnswerCountry.Name.CommonName }}</div>
+                <i class="country-flag-icon">{{ .Payload.AnswerCountry.FlagEmoji}}</i>
+                <p class="country-population">{{ .Payload.AnswerCountry.Population }}</p>
+            </div>
+            <div id="guess-container">
+                {{ if .Payload.GuessCountry }}
+                <div>{{ .Payload.GuessCountry.Name.CommonName }}</div>
+                <i class="country-flag-icon">{{ .Payload.GuessCountry.FlagEmoji}}</i>
+                <p class="country-population">{{ .Payload.GuessCountry.Population }}</p>
+                {{ else }}
+                <div></div>
+                {{ end }}
+            </div>
+            <search>
+                <fieldset>
+                    <legend>Guess the Country</legend>
+                    <form id="guess-country-form" method="POST">
+                        <label for="country-guess">Country</label>
+                        <input type="text" id="country-guess" name="country-guess" list="country-list" />
+                        <datalist id="country-list">
+                            {{ range .Payload.Countries }}
+                            <option value="{{ .Name.CommonName }}"></option>
+                            {{ end }}
+                        </datalist>
+                        <input type="submit" value="Submit Guess"/>
+                        <button id="next-guess" type="button">Next Guess</button>
+                    </form>
+                </fieldset>
+            </search>
+        </main>
+    </body>
+    <!-- <script type="module" src="static/js/guessCountries.js"></script> -->
+</html>
+{{ end }}
