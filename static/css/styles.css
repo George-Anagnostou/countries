@@ -1,0 +1,73 @@
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 100%;
+  width: 150px;
+}
+
+nav {
+    border-bottom: 1px solid black;
+}
+
+nav li {
+    display: inline-block;
+}
+
+nav li:not(:last-child)::after {
+    display: inline-block;
+    content: "|";
+    font-weight: bold;
+    padding: 0 3px;
+}
+
+#country-container {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+    width: auto;
+}
+
+#fetch-continents-form {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.country-item {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: top;
+    align-items: center;
+    background: #ccc;
+}
+
+.country-item .country-flag-icon {
+    padding-top: 5px;
+    font-size: 3em;
+}
+
+.country-item .country-name {
+    padding: 5px;
+    text-align: center;
+}
+
+.country-item .country-population {
+    padding: 5px;
+    text-align: center;
+}
+
+form {
+    max-width: 400px;
+    margin: 0;
+    padding: 20px;
+    border: 1px solid #ccc;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+}

@@ -1,0 +1,43 @@
+{{ block "search_continents" . }}
+<!DOCTYPE html>
+<html>
+    {{ template "header" . }}
+    <body>
+        <h2>Search By Continent</h2>
+        {{ template "nav" }}
+        <main>
+            <search>
+                <fieldset>
+                    <legend>Filter for Countries by geography, and sort by a variety of options.</legend>
+                    <form id="form-get-continents">
+                        <label for="continent">Continent</label>
+                        <input type="text" id="continent" name="continent" list="continent-list" />
+                        <datalist id="continent-list">
+                            {{ range .Payload.Continents }}
+                            <option value="{{ . }}"></option>
+                            {{ end }}
+                            <option value="All"></option>
+                        </datalist>
+                        <label for="sort-method">Sort by</label>
+                        <select name="sort-method" id="sort-method">
+                            <option value="alpha">Alphabetically (by common name)</option>
+                            <option value="pop">Population</option>
+                        </select>
+                        <input type="submit" value="Search Continents" />
+                    </form>
+                </fieldset>
+            </search>
+            <div id="country-container">
+                {{ range .Payload.Countries }}
+                <div>{{ .FlagEmoji }}</div>
+                    {{range .Continents }}
+                    <div>{{ . }}</div>
+                    {{ end }}
+                <div>{{ .Population }}</div>
+                {{ end }}
+            </div>
+        </main>
+    </body>
+    <!-- <script type="module" src="static/js/searchContinents.js"></script> -->
+</html>
+{{ end }}
