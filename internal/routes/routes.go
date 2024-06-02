@@ -1,7 +1,6 @@
 package routes
 
 import (
-    "log"
 	"strconv"
 
     "github.com/George-Anagnostou/countries/internal/models"
@@ -54,6 +53,8 @@ func getContinents(c echo.Context) error {
     var countries []models.CountryData
     filter := "All"
     filter = c.FormValue("continent")
+    sortMethod := c.FormValue("sort-method")
+
     for _, country := range models.Countries {
         for _, continent := range country.Continents {
             if filter == "All" || filter == "" {
@@ -64,6 +65,17 @@ func getContinents(c echo.Context) error {
                 }
             }
         }
+    }
+
+    switch sortMethod {
+    case "alpha":
+        models.CountriesByName(countries)
+    case "alpha-reverse":
+        models.CountriesByNameReverse(countries)
+    case "pop":
+        models.CountriesByPop(countries)
+    case "pop-reverse":
+        models.CountriesByPopReverse(countries)
     }
 
     pageData := models.PageData{

@@ -2,10 +2,38 @@ package models
 
 import (
 	"encoding/json"
-    "math/rand"
     "log"
+    "math/rand"
     "os"
+    "sort"
 )
+
+type PageData struct {
+	FlagEmoji string
+	Payload   interface{}
+}
+
+type CountryData struct {
+    FlagEmoji string    `json:"flag"`
+    Continents []string `json:"continents"`
+    Population int      `json:"population"`
+    Name struct {
+        CommonName string   `json:"common"`
+    }   `json:"name"`
+}
+
+type Count struct {
+	Count int
+}
+
+func ReadCount() *Count {
+    return &count
+}
+
+func IncrementCount() *Count {
+    count.Count++
+    return &count
+}
 
 var count Count = Count{Count: 0}
 
@@ -33,27 +61,26 @@ func GetFlagEmoji() string {
 	return randFlag
 }
 
-type Count struct {
-	Count int
+func CountriesByName(slice []CountryData) {
+    sort.Slice(slice, func(i, j int) bool {
+        return slice[i].Name.CommonName < slice[j].Name.CommonName
+    })
 }
 
-func ReadCount() *Count {
-    return &count
+func CountriesByNameReverse(slice []CountryData) {
+    sort.Slice(slice, func(i, j int) bool {
+        return slice[i].Name.CommonName > slice[j].Name.CommonName
+    })
 }
 
-func IncrementCount() *Count {
-    count.Count++
-    return &count
+func CountriesByPop(slice []CountryData) {
+    sort.Slice(slice, func(i, j int) bool {
+        return slice[i].Population < slice[j].Population
+    })
 }
 
-type PageData struct {
-	FlagEmoji string
-	Payload   interface{}
+func CountriesByPopReverse(slice []CountryData) {
+    sort.Slice(slice, func(i, j int) bool {
+        return slice[i].Population > slice[j].Population
+    })
 }
-
-type CountryData struct {
-    FlagEmoji string    `json:"flag"`
-    Continents []string `json:"continents"`
-    Population int      `json:"population"`
-}
-
