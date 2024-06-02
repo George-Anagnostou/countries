@@ -1,4 +1,4 @@
-module countries
+module github.com/George-Anagnostou/countries
 
 go 1.22.3
 
@@ -17,3 +17,9 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 )
+
+replace github.com/George-Anagnostou/countries/internal/routes => ./internal/routes
+
+replace github.com/George-Anagnostou/countries/internal/utils => ./internal/utils
+
+replace github.com/George-Anagnostou/countries/internal/templates => ./internal/templates
