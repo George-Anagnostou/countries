@@ -14,9 +14,10 @@ type PageData struct {
 }
 
 type CountryData struct {
-    FlagEmoji string    `json:"flag"`
-    Continents []string `json:"continents"`
-    Population int      `json:"population"`
+    FlagEmoji   string      `json:"flag"`
+    Continents  []string    `json:"continents"`
+    Population  int         `json:"population"`
+    Capitals    []string    `json:"capital"`
     Name struct {
         CommonName string   `json:"common"`
     }   `json:"name"`
@@ -96,4 +97,16 @@ func GetCountryByName(name string) *CountryData {
         }
     }
     return &CountryData{}
+}
+
+func GetCountryByCapital(name string) []*CountryData {
+    var countries []*CountryData
+    for _, country := range Countries {
+        for _, capital := range country.Capitals {
+            if name == capital {
+                countries = append(countries, &country)
+            }
+        }
+    }
+    return countries
 }
