@@ -28,9 +28,6 @@ func Start() {
 	e.GET("/guess_capitals", getGuessCapital)
 	e.POST("/guess_capitals", postGuessCapital)
 
-	e.GET("/count", getCount)
-	e.POST("/count", postCount)
-
 	e.Logger.Fatal(e.Start(":8000"))
 }
 
@@ -92,17 +89,6 @@ func getContinents(c echo.Context) error {
 		},
 	}
 	return c.Render(200, "search_continents", pageData)
-}
-
-func getCount(c echo.Context) error {
-	count := models.ReadCount()
-	return c.Render(200, "count", count)
-}
-
-func postCount(c echo.Context) error {
-	count := models.IncrementCount()
-	strCount := strconv.Itoa(count.Count)
-	return c.String(200, strCount)
 }
 
 func getGuessCountry(c echo.Context) error {

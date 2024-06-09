@@ -23,26 +23,10 @@ type CountryData struct {
     }   `json:"name"`
 }
 
-type Count struct {
-	Count int
-}
-
-func ReadCount() *Count {
-    return &count
-}
-
-func IncrementCount() *Count {
-    count.Count++
-    return &count
-}
-
-var count Count = Count{Count: 0}
-
 // `countries` will be used for the entire life of the server and
 // never change, so might as well read it once on start up
 // var countries []map[string]CountryData = readCountries()
 var Countries []CountryData = ReadCountries()
-
 
 func ReadCountries() []CountryData {
 	content, err := os.ReadFile("data/countries.json")
