@@ -7,32 +7,46 @@
         {{ template "nav" }}
         <main>
             <div id="result-container">
-                <div>{{ .Payload.AnswerCountry.Name.CommonName }}</div>
+                {{ if .Payload.Passed }}
+                    <div>{{ .Payload.AnswerCountry.Name.CommonName }}</div>
+                {{ else }}
+                {{ end }}
                 <i class="country-flag-icon">{{ .Payload.AnswerCountry.FlagEmoji}}</i>
                 <p class="country-population">{{ .Payload.AnswerCountry.Population }}</p>
             </div>
             <div id="guess-container">
+                <!-- render guess country -->
                 {{ if .Payload.GuessCountry }}
-                <div>{{ .Payload.GuessCountry.Name.CommonName }}</div>
-                <i class="country-flag-icon">{{ .Payload.GuessCountry.FlagEmoji}}</i>
-                <p class="country-population">{{ .Payload.GuessCountry.Population }}</p>
+                    {{ if .Payload.Passed }}
+                        <div><p>Congrats! You got it right</p></div>
+                    {{ else }}
+                        <div><p>Wrong!</p></div>
+                        {{ if .Payload.GuessCountry }}
+                            <div>{{ .Payload.GuessCountry.Name.CommonName }}</div>
+                            <i class="country-flag-icon">{{ .Payload.GuessCountry.FlagEmoji}}</i>
+                            <p class="country-population">{{ .Payload.GuessCountry.Population }}</p>
+                        {{ end }}
+                    {{ end }}
                 {{ else }}
-                <div></div>
                 {{ end }}
             </div>
             <search>
                 <fieldset>
                     <legend>Guess the Country</legend>
-                    <form id="guess-country-form" method="POST">
-                        <label for="country-guess">Country</label>
-                        <input type="text" id="country-guess" name="country-guess" list="country-list" />
-                        <datalist id="country-list">
-                            {{ range .Payload.Countries }}
-                            <option value="{{ .Name.CommonName }}"></option>
-                            {{ end }}
-                        </datalist>
-                        <input type="submit" value="Submit Guess"/>
-                        <button id="next-guess" type="button">Next Guess</button>
+                    {{ if not .Payload.Passed }}
+                        <form id="guess-country-form" method="POST">
+                            <label for="country-guess">Country</label>
+                            <input type="text" id="country-guess" name="country-guess" list="country-list" required/>
+                            <datalist id="country-list">
+                                {{ range .Payload.Countries }}
+                                <option value="{{ .Name.CommonName }}"></option>
+                                {{ end }}
+                            </datalist>
+                            <input type="submit" value="Submit Guess"/>
+                        </form>
+                    {{ end }}
+                    <form id="nex-guess-form" method="GET">
+                        <input id="next-guess-submit" type="submit" value="Next Guess"/>
                     </form>
                 </fieldset>
             </search>

@@ -95,5 +95,5 @@ func GetCountryByName(name string) *CountryData {
             return &country
         }
     }
-    return nil
+    return &CountryData{}
 }

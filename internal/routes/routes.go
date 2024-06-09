@@ -1,7 +1,10 @@
 package routes
 
 import (
-	"strconv"
+    "log"
+    "net/http"
+    "strconv"
+    "time"
 
 	"github.com/George-Anagnostou/countries/internal/models"
 	"github.com/George-Anagnostou/countries/internal/templates"
@@ -111,16 +114,27 @@ func getGuessCountry(c echo.Context) error {
 	countries := models.Countries
 	answerCountry := models.GetRandomCountry()
 
+    // get cookie as the country to guess
+    cookie := new(http.Cookie)
+    cookie.Name = "answerCountryName"
+    cookie.Value = answerCountry.Name.CommonName
+    cookie.Expires = time.Now().Add(5 * time.Minute)
+    c.SetCookie(cookie)
+
+    var passed bool = false
 	pageData := models.PageData{
 		FlagEmoji: flagEmoji,
 		Payload: struct {
 			Countries     []models.CountryData
 			AnswerCountry *models.CountryData
 			GuessCountry *models.CountryData
+            Passed bool
+
 		}{
 			Countries:     countries,
 			AnswerCountry: answerCountry,
 			GuessCountry: nil,
+            Passed: passed,
 		},
 	}
 	return c.Render(200, "guess_countries", pageData)
@@ -129,9 +143,31 @@ func getGuessCountry(c echo.Context) error {
 func postGuessCountry(c echo.Context) error {
 	flagEmoji := models.GetFlagEmoji()
 	countries := models.Countries
-	answerCountry := models.GetRandomCountry()
+
+    // get the target country from cookie set with getGuessCountry
+    answerCountryCookie, err := c.Cookie("answerCountryName")
+    if err != nil {
+        if err == http.ErrNoCookie {
+            c.Redirect(301, "/guess_countries")
+            return err
+        }
+        return err
+    }
+    answerCountry := models.GetCountryByName(answerCountryCookie.Value)
+
 	guessCountryName := c.FormValue("country-guess")
 	guessCountry := models.GetCountryByName(guessCountryName)
+
+    log.Printf("answerCountry = %s", answerCountry.Name.CommonName)
+    log.Printf("guessCountry = %s", guessCountry.Name.CommonName)
+    var passed bool = false
+    if answerCountry.Name.CommonName == guessCountry.Name.CommonName {
+        passed = true
+        cookie := new(http.Cookie)
+        cookie.Name = "answerCountryName"
+        cookie.Expires = time.Now().Add(-time.Hour)
+        c.SetCookie(cookie)
+    }
 
 	pageData := models.PageData{
 		FlagEmoji: flagEmoji,
@@ -139,10 +175,12 @@ func postGuessCountry(c echo.Context) error {
 			Countries     []models.CountryData
 			AnswerCountry *models.CountryData
 			GuessCountry  *models.CountryData
+            Passed bool
 		}{
 			Countries:     countries,
 			AnswerCountry: answerCountry,
 			GuessCountry:  guessCountry,
+            Passed: passed,
 		},
 	}
 	return c.Render(200, "guess_countries", pageData)
