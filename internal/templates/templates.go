@@ -3,6 +3,7 @@ package templates
 import (
 	"html/template"
 	"io"
+    "strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -18,6 +19,20 @@ func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Co
 // consider implementing FuncMap with custom functions for the templates
 func NewTemplate() *Templates {
 	return &Templates{
-		templates: template.Must(template.ParseGlob("views/*.html")),
+		templates: template.Must(template.New("").Funcs(template.FuncMap{
+            "WithCommas": WithCommas,
+        }).ParseGlob("views/*.html")),
 	}
+}
+
+func WithCommas(number int) string {
+    numberString := strconv.Itoa(number)
+    var result string
+    for i, digit := range numberString {
+        if i != 0 && (len(numberString) - i) % 3 == 0 {
+            result += ","
+        }
+        result += string(digit)
+    }
+    return result
 }

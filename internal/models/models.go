@@ -2,15 +2,25 @@ package models
 
 import (
 	"encoding/json"
-    "log"
-    "math/rand"
-    "os"
-    "sort"
+	"log"
+	"math/rand"
+	"os"
+	"sort"
 )
 
 type PageData struct {
 	FlagEmoji string
 	Payload   interface{}
+}
+
+func NewPageData(payload ...interface{}) *PageData {
+    pageData := &PageData{
+        FlagEmoji: getFlagEmoji(),
+    }
+    if len(payload) == 1 {
+        pageData.Payload = payload[0]
+    }
+    return pageData
 }
 
 type CountryData struct {
@@ -21,6 +31,48 @@ type CountryData struct {
     Name struct {
         CommonName string   `json:"common"`
     }   `json:"name"`
+}
+
+func DefaultCountryData() *CountryData {
+    return &CountryData{
+        FlagEmoji: "",
+        Continents: []string{""},
+        Population: 0,
+        Capitals: []string{""},
+        Name: struct {
+            CommonName string `json:"common"`
+        }{
+            CommonName: "",
+        },
+    }
+}
+
+type ContinentPayload struct {
+    Continents []string
+    Countries []CountryData
+}
+
+func NewContinentPayload(continents []string, countries []CountryData) *ContinentPayload {
+    return &ContinentPayload{
+        Continents: continents,
+        Countries: countries,
+    }
+}
+
+type CountriesPayload struct {
+    Countries []CountryData
+    AnswerCountry *CountryData
+    GuessCountry *CountryData
+    Passed bool
+}
+
+func NewCountriesPayload( countries []CountryData, answerCountry *CountryData, guessCountry *CountryData, passed bool) *CountriesPayload {
+    return &CountriesPayload{
+        Countries: countries,
+        AnswerCountry: answerCountry,
+        GuessCountry: guessCountry,
+        Passed: passed,
+    }
 }
 
 // `countries` will be used for the entire life of the server and
@@ -41,7 +93,7 @@ func ReadCountries() []CountryData {
 	return payload
 }
 
-func GetFlagEmoji() string {
+func getFlagEmoji() string {
 	randFlag := Countries[rand.Intn(len(Countries))].FlagEmoji
 	return randFlag
 }
@@ -74,13 +126,17 @@ func CountriesByPopReverse(slice []CountryData) {
     })
 }
 
+func GetAllCountries() []CountryData {
+    return Countries
+}
+
 func GetCountryByName(name string) *CountryData {
     for _, country := range Countries {
         if name == country.Name.CommonName {
             return &country
         }
     }
-    return &CountryData{}
+    return DefaultCountryData()
 }
 
 func GetCountryByCapital(name string) []*CountryData {
@@ -93,4 +149,48 @@ func GetCountryByCapital(name string) []*CountryData {
         }
     }
     return countries
+}
+
+func GetAllContinents() []string {
+	var continents []string
+	seen := make(map[string]bool)
+	// populate datalist
+	for _, country := range Countries {
+		for _, continent := range country.Continents {
+			if !seen[continent] {
+				continents = append(continents, continent)
+				seen[continent] = true
+			}
+		}
+	}
+    return continents
+}
+
+func FilterCountriesByContinent(countries []CountryData, filter string) []CountryData {
+	var filteredCountries []CountryData
+	for _, country := range countries {
+		for _, continent := range country.Continents {
+			if filter == "All" || filter == "" {
+				filteredCountries = countries
+			} else {
+				if continent == filter {
+					filteredCountries = append(filteredCountries, country)
+				}
+			}
+		}
+	}
+    return filteredCountries
+}
+
+func SortCountries(countries []CountryData, sortMethod string) {
+	switch sortMethod {
+	case "alpha":
+		CountriesByName(countries)
+	case "alpha-reverse":
+		CountriesByNameReverse(countries)
+	case "pop":
+		CountriesByPop(countries)
+	case "pop-reverse":
+		CountriesByPopReverse(countries)
+	}
 }

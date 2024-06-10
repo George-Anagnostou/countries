@@ -12,19 +12,25 @@
                 {{ else }}
                 {{ end }}
                 <i class="country-flag-icon">{{ .Payload.AnswerCountry.FlagEmoji}}</i>
-                <p class="country-population">{{ .Payload.AnswerCountry.Population }}</p>
+                <p class="country-population">{{ WithCommas .Payload.AnswerCountry.Population }}</p>
             </div>
             <div id="guess-container">
                 <!-- render guess country -->
                 {{ if .Payload.GuessCountry }}
                     {{ if .Payload.Passed }}
-                        <div><p>Congrats! You got it right</p></div>
+                        <p>Congrats! You got it right</p>
                     {{ else }}
-                        <div><p>Wrong!</p></div>
-                        {{ if .Payload.GuessCountry }}
-                            <div>{{ .Payload.GuessCountry.Name.CommonName }}</div>
-                            <i class="country-flag-icon">{{ .Payload.GuessCountry.FlagEmoji}}</i>
-                            <p class="country-population">{{ .Payload.GuessCountry.Population }}</p>
+                        <p>Wrong! You guessed:</p>
+                        {{ if .Payload.GuessCountry.Name.CommonName }}
+                            <p>{{ .Payload.GuessCountry.Name.CommonName }}</p>
+                        {{ else }}
+                            <p>I couldn't find that country...</p>
+                        {{ end }}
+                        {{ if .Payload.GuessCountry.FlagEmoji }}
+                            <i class="country-flag-icon">{{ .Payload.GuessCountry.FlagEmoji }}</i>
+                        {{ end }}
+                        {{ if .Payload.GuessCountry.Population }}
+                            <p class="country-population">{{ WithCommas .Payload.GuessCountry.Population }}</p>
                         {{ end }}
                     {{ end }}
                 {{ end }}

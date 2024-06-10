@@ -2,11 +2,10 @@ package routes
 
 import (
     "net/http"
-    "strconv"
-    "time"
 
 	"github.com/George-Anagnostou/countries/internal/models"
 	"github.com/George-Anagnostou/countries/internal/templates"
+	"github.com/George-Anagnostou/countries/internal/sessions"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -32,95 +31,35 @@ func Start() {
 }
 
 func getHome(c echo.Context) error {
-	flagEmoji := models.GetFlagEmoji()
-	pageData := models.PageData{
-		FlagEmoji: flagEmoji,
-	}
+    pageData := models.NewPageData()
 	return c.Render(200, "home", pageData)
 }
 
 func getContinents(c echo.Context) error {
-	flagEmoji := models.GetFlagEmoji()
-	var continents []string
-	seen := make(map[string]bool)
-	// populate datalist
-	for _, country := range models.Countries {
-		for _, continent := range country.Continents {
-			if !seen[continent] {
-				continents = append(continents, continent)
-				seen[continent] = true
-			}
-		}
-	}
-	// populate countries
-	var countries []models.CountryData
-	filter := "All"
-	filter = c.FormValue("continent")
+    continents := models.GetAllContinents()
+    allCountries := models.GetAllCountries()
+    filter := c.FormValue("continent")
+    countries := models.FilterCountriesByContinent(allCountries, filter)
 	sortMethod := c.FormValue("sort-method")
-	for _, country := range models.Countries {
-		for _, continent := range country.Continents {
-			if filter == "All" || filter == "" {
-				countries = models.Countries
-			} else {
-				if continent == filter {
-					countries = append(countries, country)
-				}
-			}
-		}
-	}
-	switch sortMethod {
-	case "alpha":
-		models.CountriesByName(countries)
-	case "alpha-reverse":
-		models.CountriesByNameReverse(countries)
-	case "pop":
-		models.CountriesByPop(countries)
-	case "pop-reverse":
-		models.CountriesByPopReverse(countries)
-	}
-	pageData := models.PageData{
-		FlagEmoji: flagEmoji,
-		Payload: struct {
-			Continents []string
-			Countries  []models.CountryData
-		}{
-			Continents: continents,
-			Countries:  countries,
-		},
-	}
+    models.SortCountries(countries, sortMethod)
+    payload := models.NewContinentPayload(continents, countries)
+    pageData := models.NewPageData(payload)
 	return c.Render(200, "search_continents", pageData)
 }
 
 func getGuessCountry(c echo.Context) error {
-	flagEmoji := models.GetFlagEmoji()
 	countries := models.Countries
 	answerCountry := models.GetRandomCountry()
-    // get cookie as the country to guess
-    cookie := new(http.Cookie)
-    cookie.Name = "answerCountryName"
-    cookie.Value = answerCountry.Name.CommonName
-    cookie.Expires = time.Now().Add(5 * time.Minute)
-    c.SetCookie(cookie)
     var passed bool = false
-	pageData := models.PageData{
-		FlagEmoji: flagEmoji,
-		Payload: struct {
-			Countries     []models.CountryData
-			AnswerCountry *models.CountryData
-			GuessCountry *models.CountryData
-            Passed bool
-		}{
-			Countries:     countries,
-			AnswerCountry: answerCountry,
-			GuessCountry: nil,
-            Passed: passed,
-		},
-	}
+    // set cookie as the country to guess
+    cookie := sessions.SetCookie("answerCountryName", answerCountry.Name.CommonName)
+    c.SetCookie(cookie)
+    payload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
+    pageData := models.NewPageData(payload)
 	return c.Render(200, "guess_countries", pageData)
 }
 
 func postGuessCountry(c echo.Context) error {
-	flagEmoji := models.GetFlagEmoji()
 	countries := models.Countries
     // get the target country from cookie set with getGuessCountry
     answerCountryCookie, err := c.Cookie("answerCountryName")
@@ -133,34 +72,19 @@ func postGuessCountry(c echo.Context) error {
     }
     answerCountry := models.GetCountryByName(answerCountryCookie.Value)
 	guessCountryName := c.FormValue("country-guess")
-	guessCountry := models.GetCountryByName(guessCountryName)
     var passed bool = false
-    if answerCountry.Name.CommonName == guessCountry.Name.CommonName {
+    if guessCountryName == answerCountry.Name.CommonName  {
         passed = true
-        cookie := new(http.Cookie)
-        cookie.Name = "answerCountryName"
-        cookie.Expires = time.Now().Add(-time.Hour)
+        cookie := sessions.ResetCookie("answerCountryName")
         c.SetCookie(cookie)
     }
-	pageData := models.PageData{
-		FlagEmoji: flagEmoji,
-		Payload: struct {
-			Countries     []models.CountryData
-			AnswerCountry *models.CountryData
-			GuessCountry  *models.CountryData
-            Passed bool
-		}{
-			Countries:     countries,
-			AnswerCountry: answerCountry,
-			GuessCountry:  guessCountry,
-            Passed: passed,
-		},
-	}
+    guessCountry := models.GetCountryByName(guessCountryName)
+    payload := models.NewCountriesPayload(countries, answerCountry, guessCountry, passed)
+    pageData := models.NewPageData(payload)
 	return c.Render(200, "guess_countries", pageData)
 }
 
 func getGuessCapital(c echo.Context) error {
-	flagEmoji := models.GetFlagEmoji()
 	countries := models.Countries
     // don't use countries where capital == null
     var answerCountry = models.GetRandomCountry()
@@ -168,31 +92,17 @@ func getGuessCapital(c echo.Context) error {
         answerCountry = models.GetRandomCountry()
     }
     // get cookie as the country to guess
-    cookie := new(http.Cookie)
-    cookie.Name = "answerCountryCapital"
-    cookie.Value = answerCountry.Name.CommonName
-    cookie.Expires = time.Now().Add(5 * time.Minute)
+    // use CommonName as in getGuessCountry, since the Capitals
+    // are less specific / determinite for finding countries
+    cookie := sessions.SetCookie("answerCountryCapital", answerCountry.Name.CommonName)
     c.SetCookie(cookie)
     var passed bool = false
-	pageData := models.PageData{
-		FlagEmoji: flagEmoji,
-		Payload: struct {
-			Countries     []models.CountryData
-			AnswerCountry *models.CountryData
-			GuessCountry *models.CountryData
-            Passed bool
-		}{
-			Countries:     countries,
-			AnswerCountry: answerCountry,
-			GuessCountry: nil,
-            Passed: passed,
-		},
-	}
+    payload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
+    pageData := models.NewPageData(payload)
 	return c.Render(200, "guess_capitals", pageData)
 }
 
 func postGuessCapital(c echo.Context) error {
-	flagEmoji := models.GetFlagEmoji()
 	countries := models.Countries
     // get the target country from cookie set with getGuessCapital
     answerCookie, err := c.Cookie("answerCountryCapital")
@@ -211,27 +121,18 @@ func postGuessCapital(c echo.Context) error {
         for _, capital := range answerCountry.Capitals {
             if capital == guessCapital {
                 passed = true
-                cookie := new(http.Cookie)
-                cookie.Name = "answerCountryCapital"
-                cookie.Expires = time.Now().Add(-time.Hour)
+                cookie := sessions.ResetCookie("answerCountryCapital")
                 c.SetCookie(cookie)
             }
         }
     }
-    guessCountry := guessCountries[0]
-	pageData := models.PageData{
-		FlagEmoji: flagEmoji,
-		Payload: struct {
-			Countries       []models.CountryData
-			AnswerCountry   *models.CountryData
-			GuessCountry    *models.CountryData
-            Passed bool
-		}{
-			Countries:     countries,
-			AnswerCountry: answerCountry,
-			GuessCountry:  guessCountry,
-            Passed: passed,
-		},
-	}
+    var guessCountry *models.CountryData
+    if len(guessCountries) < 1 {
+        guessCountry = &models.CountryData{}
+    } else {
+        guessCountry = guessCountries[0]
+    }
+    payload := models.NewCountriesPayload(countries, answerCountry, guessCountry, passed)
+    pageData := models.NewPageData(payload)
 	return c.Render(200, "guess_capitals", pageData)
 }

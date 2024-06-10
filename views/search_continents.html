@@ -46,7 +46,7 @@
                 {{ range .Continents }}
                 <div>{{ . }}</div>
                 {{ end }}
-            <div>{{ .Population }}</div>
+            <div>{{ WithCommas .Population }}</div>
         </div>
         {{ end }}
 {{ end }}

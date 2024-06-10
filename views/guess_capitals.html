@@ -15,14 +15,26 @@
                 {{ else }}
                 {{ end }}
                 <i class="country-flag-icon">{{ .Payload.AnswerCountry.FlagEmoji}}</i>
-                <p class="country-population">{{ .Payload.AnswerCountry.Population }}</p>
+                <p class="country-population">{{ WithCommas .Payload.AnswerCountry.Population }}</p>
             </div>
             <div id="guess-container">
+                <!-- render guess country -->
                 {{ if .Payload.GuessCountry }}
                     {{ if .Payload.Passed }}
                         <p>Congrats! You got it right</p>
                     {{ else }}
-                        <p>Wrong!</p>
+                        <p>Wrong! You guessed:</p>
+                        {{ if .Payload.GuessCountry.Name.CommonName }}
+                            <p>{{ .Payload.GuessCountry.Name.CommonName }}</p>
+                        {{ else }}
+                            <p>I couldn't find that capital...</p>
+                        {{ end }}
+                        {{ if .Payload.GuessCountry.FlagEmoji }}
+                            <i class="country-flag-icon">{{ .Payload.GuessCountry.FlagEmoji }}</i>
+                        {{ end }}
+                        {{ if .Payload.GuessCountry.Population }}
+                            <p class="country-population">{{ WithCommas .Payload.GuessCountry.Population }}</p>
+                        {{ end }}
                     {{ end }}
                 {{ end }}
             </div>
@@ -32,7 +44,7 @@
                     {{ if not .Payload.Passed }}
                         <form id="guess-capital-form" method="POST">
                             <label for="guess-capital">Country</label>
-                            <input type="text" id="guess-capital" name="guess-capital" list="country-list"/>
+                            <input type="text" id="guess-capital" name="guess-capital" list="country-list" required/>
                             <datalist id="country-list">
                                 {{ range .Payload.Countries }}
                                     {{ range .Capitals }}
