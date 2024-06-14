@@ -1,0 +1,18 @@
+{{ block "user" . }}
+<!DOCTYPE html>
+<html>
+    <body>
+        {{ template "header" . }}
+        <h1>Welcome, {{ .GetUsername }}</h1>
+        {{ template "nav" }}
+        <main>
+            <p>High scores are calculated by the number of sequential correct guesses.</p>
+            <p>Your high sores are:</p>
+            <div>
+                <p>Country Guessing: {{ .GetCountryScore }}</p>
+                <p>Capital Guessing: {{ .GetCapitalScore }}</p>
+            </div>
+        </main>
+    </body>
+</html>
+{{ end }}

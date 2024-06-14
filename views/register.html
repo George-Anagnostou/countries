@@ -1,0 +1,17 @@
+{{ block "register" . }}
+<!DOCTYPE html>
+<html>
+    <body>
+        {{ template "header" . }}
+        <h1>Register an Account</h1>
+        {{ template "nav" }}
+        <main>
+            <form id="register-form" method="POST">
+                <input type="text" id="username" name="username" placeholder="Username" required />
+                <input type="password" id="password" name="password" placeholder="Password"/>
+                <input type="submit" value="Create Account" />
+            </form>
+        </main>
+    </body>
+</html>
+{{ end }}

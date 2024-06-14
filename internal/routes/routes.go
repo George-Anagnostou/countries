@@ -19,6 +19,12 @@ func Start() {
 
 	e.GET("/", getHome)
 
+    e.GET("/register", getRegister)
+    e.POST("/register", postRegister)
+
+    e.GET("/login", getLogin)
+    e.POST("/login", postLogin)
+
 	e.GET("/search_continents", getContinents)
 
 	e.GET("/guess_countries", getGuessCountry)
@@ -33,6 +39,26 @@ func Start() {
 func getHome(c echo.Context) error {
     pageData := models.NewPageData()
 	return c.Render(200, "home", pageData)
+}
+
+func getRegister(c echo.Context) error {
+    pageData := models.NewPageData()
+	return c.Render(200, "register", pageData)
+}
+
+func postRegister(c echo.Context) error {
+    pageData := models.NewPageData()
+	return c.Render(200, "register", pageData)
+}
+
+func getLogin(c echo.Context) error {
+    pageData := models.NewPageData()
+	return c.Render(200, "login", pageData)
+}
+
+func postLogin(c echo.Context) error {
+    pageData := models.NewPageData()
+	return c.Render(200, "login", pageData)
 }
 
 func getContinents(c echo.Context) error {

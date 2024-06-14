@@ -1,0 +1,10 @@
+{{ block "user-card" . }}
+<div id="user-card">
+    {{ if .User }}
+        <a href="">{{ .GetUsername }}</a>
+    {{ else }}
+        <p><a href="">Guest Login</a> |
+        <a href="/register">Register</a></p>
+    {{ end }}
+</div>
+{{ end }}
