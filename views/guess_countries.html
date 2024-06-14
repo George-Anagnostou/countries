@@ -1,8 +1,8 @@
 {{ block "guess_countries" . }}
 <!DOCTYPE html>
 <html>
-    {{ template "header" . }}
     <body>
+        {{ template "header" . }}
         <h2>Guess the Country</h2>
         {{ template "nav" }}
         <main>
@@ -41,7 +41,7 @@
                     {{ if not .Payload.Passed }}
                         <form id="guess-country-form" method="POST">
                             <label for="country-guess">Country</label>
-                            <input type="text" id="country-guess" name="country-guess" list="country-list" required/>
+                            <input type="text" id="country-guess" name="country-guess" list="country-list" required />
                             <datalist id="country-list">
                                 {{ range .Payload.Countries }}
                                 <option value="{{ .Name.CommonName }}"></option>
@@ -57,6 +57,5 @@
             </search>
         </main>
     </body>
-<!-- <script type="module" src="static/js/guessCountries.js"></script> -->
 </html>
 {{ end }}

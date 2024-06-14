@@ -34,19 +34,5 @@
             </div>
         </main>
     </body>
-    <!-- <script type="module" src="static/js/searchContinents.js"></script> -->
 </html>
-{{ end }}
-
-{{ block "country-card" . }}
-        {{ range . }}
-        <div class="country-card">
-            <div>{{ .FlagEmoji }}</div>
-            <div>{{ .Name.CommonName }}</div>
-                {{ range .Continents }}
-                <div>{{ . }}</div>
-                {{ end }}
-            <div>{{ WithCommas .Population }}</div>
-        </div>
-        {{ end }}
 {{ end }}

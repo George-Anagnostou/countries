@@ -1,0 +1,17 @@
+{{ block "login" . }}
+<!DOCTYPE html>
+<html>
+    <body>
+        {{ template "header" . }}
+        <h1>Login</h1>
+        {{ template "nav" }}
+        <main>
+            <form id="login-form" method="POST">
+                <input type="text" id="username" name="username" required placeholder="Username" />
+                <input type="password" id="password" name="password" placeholder="Password" />
+                <input type="submit" value="Login" />
+            </form>
+        </main>
+    </body>
+</html>
+{{ end }}
