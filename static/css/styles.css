@@ -9,6 +9,8 @@ textarea {
 
 nav {
     border-bottom: 1px solid black;
+    display: flex;
+    justify-content: space-between;
 }
 
 nav li {
@@ -70,4 +72,7 @@ form {
 label {
     display: block;
     margin-bottom: 10px;
+}
+
+#user-card {
 }

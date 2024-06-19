@@ -66,12 +66,22 @@ type CountriesPayload struct {
     Passed bool
 }
 
-func NewCountriesPayload( countries []CountryData, answerCountry *CountryData, guessCountry *CountryData, passed bool) *CountriesPayload {
+func NewCountriesPayload(countries []CountryData, answerCountry *CountryData, guessCountry *CountryData, passed bool) *CountriesPayload {
     return &CountriesPayload{
         Countries: countries,
         AnswerCountry: answerCountry,
         GuessCountry: guessCountry,
         Passed: passed,
+    }
+}
+
+type UserPayload struct {
+    User *User
+}
+
+func NewUserPayload(user *User) *UserPayload {
+    return &UserPayload{
+        User: user,
     }
 }
 

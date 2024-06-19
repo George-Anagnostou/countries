@@ -1,8 +1,10 @@
 package routes
 
 import (
+    "log"
     "net/http"
 
+    "github.com/George-Anagnostou/countries/internal/db"
 	"github.com/George-Anagnostou/countries/internal/models"
 	"github.com/George-Anagnostou/countries/internal/templates"
 	"github.com/George-Anagnostou/countries/internal/sessions"
@@ -12,9 +14,11 @@ import (
 )
 
 func Start() {
+    store := sessions.InitSessionStore()
 	e := echo.New()
 	e.Static("/static", "static")
 	e.Use(middleware.Logger())
+    e.Use(sessions.Middleware(store))
 	e.Renderer = templates.NewTemplate()
 
 	e.GET("/", getHome)
@@ -24,6 +28,8 @@ func Start() {
 
     e.GET("/login", getLogin)
     e.POST("/login", postLogin)
+
+    e.POST("/logout", postLogout)
 
 	e.GET("/search_continents", getContinents)
 
@@ -37,7 +43,23 @@ func Start() {
 }
 
 func getHome(c echo.Context) error {
-    pageData := models.NewPageData()
+    sess, err := sessions.GetSession(c, "user-session")
+    if err != nil {
+        log.Print("error getting session")
+    }
+    untyped := sess.Values["username"]
+    username, ok := untyped.(string)
+    if !ok {
+        log.Print("error getting username")
+    }
+    user, err := db.GetUserByUsername(username)
+    if err != nil {
+        log.Print("error getting user from username")
+    }
+    log.Printf("\n\nuser = %s\n\n", user)
+
+    payload := models.NewUserPayload(user)
+    pageData := models.NewPageData(payload)
 	return c.Render(200, "home", pageData)
 }
 
@@ -47,8 +69,17 @@ func getRegister(c echo.Context) error {
 }
 
 func postRegister(c echo.Context) error {
+    username := c.FormValue("username")
+    password := c.FormValue("password")
+    err := db.AddUser(username, password)
     pageData := models.NewPageData()
-	return c.Render(200, "register", pageData)
+    // currently inadequate error handling should handle if
+    // 1. users exists
+    // 2. password invalid (frontend handles validation?)
+    if err != nil {
+        return c.Render(500, "internalServerError", pageData)
+    }
+    return c.Redirect(301, "/login")
 }
 
 func getLogin(c echo.Context) error {
@@ -57,8 +88,36 @@ func getLogin(c echo.Context) error {
 }
 
 func postLogin(c echo.Context) error {
+    username := c.FormValue("username")
+    password := c.FormValue("password")
+
     pageData := models.NewPageData()
-	return c.Render(200, "login", pageData)
+    user, err := db.AuthenticateUser(username, password)
+    if err != nil {
+        if err == models.ErrInvalidLogin {
+            // not the right way to handle this error...
+            return c.Render(401, "unauthorized", pageData)
+        }
+        return c.Render(500, "internalServerError", pageData)
+    }
+    sess, err := sessions.GetSession(c, "user-session")
+    if err != nil {
+        return c.Render(500, "internalServerError", pageData)
+    }
+    sess.Values["username"] = user.Username
+    sess.Save(c.Request(), c.Response())
+
+    return c.Redirect(301, "/")
+}
+
+// logging out once works
+// logging out a second time (different user) doesn't
+// ???
+func postLogout(c echo.Context) error {
+    sess, _ := sessions.GetSession(c, "user-session")
+    sess.Options.MaxAge = -1
+    sess.Save(c.Request(), c.Response())
+    return c.Redirect(301, "/")
 }
 
 func getContinents(c echo.Context) error {
