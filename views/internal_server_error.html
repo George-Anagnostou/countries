@@ -1,0 +1,13 @@
+{{ block "internalServerError" . }}
+<!DOCTYPE html>
+<html>
+    <body>
+        {{ template "header" . }}
+        <h1>500: Internal Server Error</h1>
+        {{ template "nav" }}
+        <main>
+            <p>Something went wrong...</p>
+        </main>
+    </body>
+</html>
+{{ end }}

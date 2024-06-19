@@ -1,0 +1,13 @@
+{{ block "unauthorized" . }}
+<!DOCTYPE html>
+<html>
+    <body>
+        {{ template "header" . }}
+        <h1>401: Unauthorized Access</h1>
+        {{ template "nav" }}
+        <main>
+            <p>You are unauthorized to access this page.</p>
+        </main>
+    </body>
+</html>
+{{ end }}

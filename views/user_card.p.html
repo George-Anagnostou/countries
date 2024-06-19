@@ -1,10 +1,17 @@
 {{ block "user-card" . }}
 <div id="user-card">
-    {{ if .User }}
-        <a href="">{{ .GetUsername }}</a>
+    <p>
+    {{ if .Payload.User }}
+        <a href="#">Hello, {{ .Payload.User.Username }}</a>
+        <!-- | <a href="/logout">Logout</a> -->
+    |
+    <form method="POST" action="/logout">
+        <button type="submit">Logout</button>
+    </form>
     {{ else }}
-        <p><a href="">Guest Login</a> |
-        <a href="/register">Register</a></p>
+        <a href="/login">Login</a> |
+        <a href="/register">Register</a>
     {{ end }}
+    </p>
 </div>
 {{ end }}

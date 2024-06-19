@@ -4,7 +4,7 @@
     <body>
         {{ template "header" . }}
         <h2>The Country Guessing Site</h2>
-        {{ template "nav" }}
+        {{ template "nav" . }}
         <main>
             <p>Welcome to the country guessing site. There are currently only a few
             things to do, but hopefully you will find them interesting. Namely, the
@@ -20,11 +20,15 @@
             playing the games on this site is not only fun, but productive towards
             learning about the countries of the world.</p>
 
+            <p>This site is a little unique: it uses <em>no</em> <code>JavaScript</code>.
+            Everything is written in plain <code>HTML</code> and <code>CSS</code>,
+            and it's all delivered and handled by a simple <code>Go</code> server.</p>
+
             <p>The guessing games on this site use cookies to compare your guess to the
-                question asked.</p>
+            question asked, as well as handle user sessions.</p>
 
             <p>The country data used in this site comes from
-                <a href="https://restcountries.com/">REST Countries</a>.
+                <a href="https://restcountries.com/">REST Countries</a></p>.
         </main>
     </body>
 </html>
