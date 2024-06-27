@@ -1,4 +1,4 @@
-package sessions
+package middleware
 
 import (
 	"encoding/base64"
@@ -7,13 +7,14 @@ import (
 	"os"
 	"time"
 
+	// "github.com/George-Anagnostou/countries/internal/db"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 )
 
-func InitSessionStore() *sessions.CookieStore {
+func InitSessionStore() echo.MiddlewareFunc {
     err := godotenv.Load()
     if err != nil {
         log.Println("no .env file found")
@@ -29,15 +30,27 @@ func InitSessionStore() *sessions.CookieStore {
         log.Fatal(err)
     }
 
-    return sessions.NewCookieStore(keyBytes)
+    store := sessions.NewCookieStore(keyBytes)
+    return session.Middleware(store)
 }
 
 func GetSession(c echo.Context, sessionName string) (*sessions.Session, error) {
     return session.Get(sessionName, c)
 }
 
-func Middleware(store *sessions.CookieStore) echo.MiddlewareFunc {
-    return session.Middleware(store)
+func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+    return func(c echo.Context) error {
+        sess, _ := session.Get("session", c)
+        userID := sess.Values["user_id"]
+
+        if userID == nil {
+            c.Set("userID", nil)
+        } else {
+            c.Set("userID", userID)
+        }
+
+        return next(c)
+    }
 }
 
 func SetCookie(key string, name string) *http.Cookie {
@@ -55,4 +68,12 @@ func ResetCookie(key string) *http.Cookie {
     return cookie
 }
 
-
+// func IsLoggedIn(next echo.HandlerFunc) echo.HandlerFunc {
+//     return func(c echo.Context) error {
+//         session := sessions.
+//         userID := session.Get("user_id").(int64)
+//         user, _ := db.GetUserByID(userID)
+//         c.Set("user", user)
+//         return next(c)
+//     }
+// }

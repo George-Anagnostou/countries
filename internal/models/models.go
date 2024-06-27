@@ -11,6 +11,7 @@ import (
 type PageData struct {
 	FlagEmoji string
 	Payload   interface{}
+    User      *User
 }
 
 func NewPageData(payload ...interface{}) *PageData {
