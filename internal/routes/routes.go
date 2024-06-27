@@ -6,21 +6,14 @@ import (
 
     "github.com/George-Anagnostou/countries/internal/db"
 	"github.com/George-Anagnostou/countries/internal/models"
-	"github.com/George-Anagnostou/countries/internal/templates"
-	"github.com/George-Anagnostou/countries/internal/sessions"
+	// "github.com/George-Anagnostou/countries/internal/templates"
+	"github.com/George-Anagnostou/countries/internal/middleware"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	// "github.com/labstack/echo/v4/middleware"
 )
 
-func Start() {
-    store := sessions.InitSessionStore()
-	e := echo.New()
-	e.Static("/static", "static")
-	e.Use(middleware.Logger())
-    e.Use(sessions.Middleware(store))
-	e.Renderer = templates.NewTemplate()
-
+func RegisterRoutes(e *echo.Echo) {
 	e.GET("/", getHome)
 
     e.GET("/register", getRegister)
@@ -38,12 +31,10 @@ func Start() {
 
 	e.GET("/guess_capitals", getGuessCapital)
 	e.POST("/guess_capitals", postGuessCapital)
-
-	e.Logger.Fatal(e.Start(":8000"))
 }
 
-func getHome(c echo.Context) error {
-    sess, err := sessions.GetSession(c, "user-session")
+func agetHome(c echo.Context) error {
+    sess, err := middleware.GetSession(c, "user-session")
     if err != nil {
         log.Print("error getting session")
     }
@@ -56,11 +47,28 @@ func getHome(c echo.Context) error {
     if err != nil {
         log.Print("error getting user from username")
     }
-    log.Printf("\n\nuser = %s\n\n", user)
-
     payload := models.NewUserPayload(user)
     pageData := models.NewPageData(payload)
 	return c.Render(200, "home", pageData)
+}
+
+func getHome(c echo.Context) error {
+    // var user *models.User
+    // userID := c.Get("userID")
+    // log.Printf("\n\n userID = %v", userID)
+    // if userID == nil {
+    //     user = nil
+    // } else {
+    //     var err error
+    //     userID := userID.(int)
+    //     user, err = db.GetUserByID(userID)
+    //     if err != nil {
+    //         return err
+    //     }
+    // }
+    // payload := models.NewUserPayload(user)
+    pageData := models.NewPageData()
+    return c.Render(200, "home", pageData)
 }
 
 func getRegister(c echo.Context) error {
@@ -73,9 +81,9 @@ func postRegister(c echo.Context) error {
     password := c.FormValue("password")
     err := db.AddUser(username, password)
     pageData := models.NewPageData()
-    // currently inadequate error handling should handle if
-    // 1. users exists
-    // 2. password invalid (frontend handles validation?)
+    if err == db.ErrInvalidRegistration {
+        return c.Render(200, "internalServerError", pageData)
+    }
     if err != nil {
         return c.Render(500, "internalServerError", pageData)
     }
@@ -93,14 +101,20 @@ func postLogin(c echo.Context) error {
 
     pageData := models.NewPageData()
     user, err := db.AuthenticateUser(username, password)
-    if err != nil {
-        if err == models.ErrInvalidLogin {
-            // not the right way to handle this error...
-            return c.Render(401, "unauthorized", pageData)
-        }
-        return c.Render(500, "internalServerError", pageData)
+    if err == models.ErrInvalidLogin {
+        // not the right way to handle this error...
+        // return c.Render(401, "unauthorized", pageData)
+        return c.JSON(http.StatusUnauthorized, echo.Map{
+            "error": "invalid username or password",
+        })
     }
-    sess, err := sessions.GetSession(c, "user-session")
+    if err != nil {
+        // return c.Render(500, "internalServerError", pageData)
+        return c.JSON(http.StatusInternalServerError, echo.Map{
+            "error": "internal service error",
+        })
+    }
+    sess, err := middleware.GetSession(c, "user-session")
     if err != nil {
         return c.Render(500, "internalServerError", pageData)
     }
@@ -110,11 +124,8 @@ func postLogin(c echo.Context) error {
     return c.Redirect(301, "/")
 }
 
-// logging out once works
-// logging out a second time (different user) doesn't
-// ???
 func postLogout(c echo.Context) error {
-    sess, _ := sessions.GetSession(c, "user-session")
+    sess, _ := middleware.GetSession(c, "user-session")
     sess.Options.MaxAge = -1
     sess.Save(c.Request(), c.Response())
     return c.Redirect(301, "/")
@@ -128,7 +139,14 @@ func getContinents(c echo.Context) error {
 	sortMethod := c.FormValue("sort-method")
     models.SortCountries(countries, sortMethod)
     payload := models.NewContinentPayload(continents, countries)
+    untyped := c.Get("userID")
+    userID, _ := untyped.(int)
     pageData := models.NewPageData(payload)
+    user, err := db.GetUserByID(userID)
+    if err == nil {
+        pageData.User = nil
+    }
+    pageData.User = user
 	return c.Render(200, "search_continents", pageData)
 }
 
@@ -137,7 +155,7 @@ func getGuessCountry(c echo.Context) error {
 	answerCountry := models.GetRandomCountry()
     var passed bool = false
     // set cookie as the country to guess
-    cookie := sessions.SetCookie("answerCountryName", answerCountry.Name.CommonName)
+    cookie := middleware.SetCookie("answerCountryName", answerCountry.Name.CommonName)
     c.SetCookie(cookie)
     payload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
     pageData := models.NewPageData(payload)
@@ -160,7 +178,7 @@ func postGuessCountry(c echo.Context) error {
     var passed bool = false
     if guessCountryName == answerCountry.Name.CommonName  {
         passed = true
-        cookie := sessions.ResetCookie("answerCountryName")
+        cookie := middleware.ResetCookie("answerCountryName")
         c.SetCookie(cookie)
     }
     guessCountry := models.GetCountryByName(guessCountryName)
@@ -179,7 +197,7 @@ func getGuessCapital(c echo.Context) error {
     // get cookie as the country to guess
     // use CommonName as in getGuessCountry, since the Capitals
     // are less specific / determinite for finding countries
-    cookie := sessions.SetCookie("answerCountryCapital", answerCountry.Name.CommonName)
+    cookie := middleware.SetCookie("answerCountryCapital", answerCountry.Name.CommonName)
     c.SetCookie(cookie)
     var passed bool = false
     payload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
@@ -206,7 +224,7 @@ func postGuessCapital(c echo.Context) error {
         for _, capital := range answerCountry.Capitals {
             if capital == guessCapital {
                 passed = true
-                cookie := sessions.ResetCookie("answerCountryCapital")
+                cookie := middleware.ResetCookie("answerCountryCapital")
                 c.SetCookie(cookie)
             }
         }
