@@ -2,7 +2,6 @@ package routes
 
 import (
     "net/http"
-    "log"
 
     "github.com/George-Anagnostou/countries/internal/db"
 	"github.com/George-Anagnostou/countries/internal/models"
@@ -46,44 +45,49 @@ func RegisterRoutes(e *echo.Echo) {
 	e.POST("/guess_capitals", postGuessCapital)
 }
 
+func getUserFromContext(c echo.Context) *models.User {
+    user, ok := c.Get("user").(*models.User)
+    if !ok {
+        return nil
+    }
+    return user
+}
+
 func getHome(c echo.Context) error {
-    user, _ := c.Get("user").(*models.User)
-    userPayload := models.NewUserPayload(user)
-    basePayload := models.NewBasePayload()
-    payload := models.CombinePayloads(userPayload, *basePayload)
-    log.Printf("payload = %v", payload)
-    return c.Render(200, "home", payload)
+    basePayload := models.NewBasePayload(getUserFromContext(c))
+    return c.Render(200, "home", basePayload)
 }
 
 func getRegister(c echo.Context) error {
-    pageData := models.NewPageData()
-	return c.Render(200, "register", pageData)
+    basePayload := models.NewBasePayload(getUserFromContext(c))
+	return c.Render(200, "register", basePayload)
 }
 
 func postRegister(c echo.Context) error {
     username := c.FormValue("username")
     password := c.FormValue("password")
     err := db.AddUser(username, password)
-    pageData := models.NewPageData()
+    // basePayload := models.NewBasePayload()
     if err == db.ErrInvalidRegistration {
         return c.Redirect(301, "/register")
     }
     if err != nil {
-        return c.Render(500, "internalServerError", pageData)
+        // return c.Render(500, "internalServerError", basePayload)
+        return c.Redirect(301, "/register")
     }
     return c.Redirect(301, "/login")
 }
 
 func getLogin(c echo.Context) error {
-    pageData := models.NewPageData()
-	return c.Render(200, "login", pageData)
+    basePayload := models.NewBasePayload(getUserFromContext(c))
+	return c.Render(200, "login", basePayload)
 }
 
 func postLogin(c echo.Context) error {
     username := c.FormValue("username")
     password := c.FormValue("password")
 
-    pageData := models.NewPageData()
+    // basePayload := models.NewBasePayload(getUserFromContext(c))
     user, err := db.AuthenticateUser(username, password)
     if err == models.ErrInvalidLogin {
         // not the right way to handle this error...
@@ -98,13 +102,15 @@ func postLogin(c echo.Context) error {
     }
     sess, err := middleware.GetSession("session", c)
     if err != nil {
-        return c.Render(500, "internalServerError", pageData)
+        // return c.Render(500, "internalServerError", basePayload)
+        return c.Redirect(301, "/login")
     }
     // log.Printf("from routes: user.ID = %d", user.ID)
     sess.Values["userID"] = user.ID
     // log.Printf("from routes: sess.Values.userID = %v", sess.Values["userID"])
     if err = sess.Save(c.Request(), c.Response()); err != nil {
-        return c.Render(500, "internalServerError", pageData)
+        // return c.Render(500, "internalServerError", basePayload)
+        return c.Redirect(301, "/login")
     }
 
     // log.Printf("from routes: user logged in as %s", user.Username)
@@ -125,9 +131,10 @@ func getContinents(c echo.Context) error {
     countries := models.FilterCountriesByContinent(allCountries, filter)
 	sortMethod := c.FormValue("sort-method")
     models.SortCountries(countries, sortMethod)
-    payload := models.NewContinentPayload(continents, countries)
-    pageData := models.NewPageData(payload)
-	return c.Render(200, "search_continents", pageData)
+    continentsPayload := models.NewContinentPayload(continents, countries)
+    basePayload := models.NewBasePayload(getUserFromContext(c))
+    payload := models.CombinePayloads(continentsPayload, *basePayload)
+	return c.Render(200, "search_continents", payload)
 }
 
 func getGuessCountry(c echo.Context) error {
@@ -137,9 +144,10 @@ func getGuessCountry(c echo.Context) error {
     // set cookie as the country to guess
     cookie := middleware.SetCookie("answerCountryName", answerCountry.Name.CommonName)
     c.SetCookie(cookie)
-    payload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
-    pageData := models.NewPageData(payload)
-	return c.Render(200, "guess_countries", pageData)
+    countriesPayload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
+    basePayload := models.NewBasePayload(getUserFromContext(c))
+    payload := models.CombinePayloads(countriesPayload, *basePayload)
+	return c.Render(200, "guess_countries", payload)
 }
 
 func postGuessCountry(c echo.Context) error {
@@ -162,9 +170,10 @@ func postGuessCountry(c echo.Context) error {
         c.SetCookie(cookie)
     }
     guessCountry := models.GetCountryByName(guessCountryName)
-    payload := models.NewCountriesPayload(countries, answerCountry, guessCountry, passed)
-    pageData := models.NewPageData(payload)
-	return c.Render(200, "guess_countries", pageData)
+    countriesPayload := models.NewCountriesPayload(countries, answerCountry, guessCountry, passed)
+    basePayload := models.NewBasePayload(getUserFromContext(c))
+    payload := models.CombinePayloads(countriesPayload, *basePayload)
+	return c.Render(200, "guess_countries", payload)
 }
 
 func getGuessCapital(c echo.Context) error {
@@ -180,9 +189,10 @@ func getGuessCapital(c echo.Context) error {
     cookie := middleware.SetCookie("answerCountryCapital", answerCountry.Name.CommonName)
     c.SetCookie(cookie)
     var passed bool = false
-    payload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
-    pageData := models.NewPageData(payload)
-	return c.Render(200, "guess_capitals", pageData)
+    countriesPayload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
+    basePayload := models.NewBasePayload(getUserFromContext(c))
+    payload := models.CombinePayloads(countriesPayload, *basePayload)
+	return c.Render(200, "guess_capitals", payload)
 }
 
 func postGuessCapital(c echo.Context) error {
@@ -215,7 +225,8 @@ func postGuessCapital(c echo.Context) error {
     } else {
         guessCountry = guessCountries[0]
     }
-    payload := models.NewCountriesPayload(countries, answerCountry, guessCountry, passed)
-    pageData := models.NewPageData(payload)
-	return c.Render(200, "guess_capitals", pageData)
+    countriesPayload := models.NewCountriesPayload(countries, answerCountry, guessCountry, passed)
+    basePayload := models.NewBasePayload(getUserFromContext(c))
+    payload := models.CombinePayloads(countriesPayload, *basePayload)
+	return c.Render(200, "guess_capitals", payload)
 }

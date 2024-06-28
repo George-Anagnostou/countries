@@ -4,7 +4,7 @@
     {{ template "header" . }}
     <body>
         <h2>Search By Continent</h2>
-        {{ template "nav" }}
+        {{ template "nav" . }}
         <main>
             <search>
                 <fieldset>
@@ -13,7 +13,7 @@
                         <label for="continent">Continent</label>
                         <input type="text" id="continent" name="continent" list="continent-list" />
                         <datalist id="continent-list">
-                            {{ range .Payload.Continents }}
+                            {{ range .Continents }}
                             <option value="{{ . }}"></option>
                             {{ end }}
                             <option value="All"></option>
@@ -30,7 +30,7 @@
                 </fieldset>
             </search>
             <div id="country-container">
-                {{ template "country-card" .Payload.Countries }}
+                {{ template "country-card" .Countries }}
             </div>
         </main>
     </body>
