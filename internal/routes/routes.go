@@ -1,17 +1,30 @@
 package routes
 
 import (
-    "log"
     "net/http"
+    "log"
 
     "github.com/George-Anagnostou/countries/internal/db"
 	"github.com/George-Anagnostou/countries/internal/models"
-	// "github.com/George-Anagnostou/countries/internal/templates"
 	"github.com/George-Anagnostou/countries/internal/middleware"
+    "github.com/George-Anagnostou/countries/internal/templates"
 
-	"github.com/labstack/echo/v4"
-	// "github.com/labstack/echo/v4/middleware"
+    "github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 )
+
+func Start() {
+	e := echo.New()
+    e.Static("/static", "static")
+	e.Use(echoMiddleware.Logger())
+    e.Use(echoMiddleware.Recover())
+    e.Use(middleware.InitSessionStore())
+    e.Use(middleware.AuthMiddleware)
+	e.Renderer = templates.NewTemplate()
+
+    RegisterRoutes(e)
+	e.Logger.Fatal(e.Start(":8000"))
+}
 
 func RegisterRoutes(e *echo.Echo) {
 	e.GET("/", getHome)
@@ -33,42 +46,13 @@ func RegisterRoutes(e *echo.Echo) {
 	e.POST("/guess_capitals", postGuessCapital)
 }
 
-func agetHome(c echo.Context) error {
-    sess, err := middleware.GetSession(c, "user-session")
-    if err != nil {
-        log.Print("error getting session")
-    }
-    untyped := sess.Values["username"]
-    username, ok := untyped.(string)
-    if !ok {
-        log.Print("error getting username")
-    }
-    user, err := db.GetUserByUsername(username)
-    if err != nil {
-        log.Print("error getting user from username")
-    }
-    payload := models.NewUserPayload(user)
-    pageData := models.NewPageData(payload)
-	return c.Render(200, "home", pageData)
-}
-
 func getHome(c echo.Context) error {
-    // var user *models.User
-    // userID := c.Get("userID")
-    // log.Printf("\n\n userID = %v", userID)
-    // if userID == nil {
-    //     user = nil
-    // } else {
-    //     var err error
-    //     userID := userID.(int)
-    //     user, err = db.GetUserByID(userID)
-    //     if err != nil {
-    //         return err
-    //     }
-    // }
-    // payload := models.NewUserPayload(user)
-    pageData := models.NewPageData()
-    return c.Render(200, "home", pageData)
+    user, _ := c.Get("user").(*models.User)
+    userPayload := models.NewUserPayload(user)
+    basePayload := models.NewBasePayload()
+    payload := models.CombinePayloads(userPayload, *basePayload)
+    log.Printf("payload = %v", payload)
+    return c.Render(200, "home", payload)
 }
 
 func getRegister(c echo.Context) error {
@@ -82,7 +66,7 @@ func postRegister(c echo.Context) error {
     err := db.AddUser(username, password)
     pageData := models.NewPageData()
     if err == db.ErrInvalidRegistration {
-        return c.Render(200, "internalServerError", pageData)
+        return c.Redirect(301, "/register")
     }
     if err != nil {
         return c.Render(500, "internalServerError", pageData)
@@ -103,29 +87,32 @@ func postLogin(c echo.Context) error {
     user, err := db.AuthenticateUser(username, password)
     if err == models.ErrInvalidLogin {
         // not the right way to handle this error...
-        // return c.Render(401, "unauthorized", pageData)
         return c.JSON(http.StatusUnauthorized, echo.Map{
             "error": "invalid username or password",
         })
     }
     if err != nil {
-        // return c.Render(500, "internalServerError", pageData)
         return c.JSON(http.StatusInternalServerError, echo.Map{
             "error": "internal service error",
         })
     }
-    sess, err := middleware.GetSession(c, "user-session")
+    sess, err := middleware.GetSession("session", c)
     if err != nil {
         return c.Render(500, "internalServerError", pageData)
     }
-    sess.Values["username"] = user.Username
-    sess.Save(c.Request(), c.Response())
+    // log.Printf("from routes: user.ID = %d", user.ID)
+    sess.Values["userID"] = user.ID
+    // log.Printf("from routes: sess.Values.userID = %v", sess.Values["userID"])
+    if err = sess.Save(c.Request(), c.Response()); err != nil {
+        return c.Render(500, "internalServerError", pageData)
+    }
 
+    // log.Printf("from routes: user logged in as %s", user.Username)
     return c.Redirect(301, "/")
 }
 
 func postLogout(c echo.Context) error {
-    sess, _ := middleware.GetSession(c, "user-session")
+    sess, _ := middleware.GetSession("session", c)
     sess.Options.MaxAge = -1
     sess.Save(c.Request(), c.Response())
     return c.Redirect(301, "/")
@@ -139,14 +126,7 @@ func getContinents(c echo.Context) error {
 	sortMethod := c.FormValue("sort-method")
     models.SortCountries(countries, sortMethod)
     payload := models.NewContinentPayload(continents, countries)
-    untyped := c.Get("userID")
-    userID, _ := untyped.(int)
     pageData := models.NewPageData(payload)
-    user, err := db.GetUserByID(userID)
-    if err == nil {
-        pageData.User = nil
-    }
-    pageData.User = user
 	return c.Render(200, "search_continents", pageData)
 }
 
@@ -196,7 +176,7 @@ func getGuessCapital(c echo.Context) error {
     }
     // get cookie as the country to guess
     // use CommonName as in getGuessCountry, since the Capitals
-    // are less specific / determinite for finding countries
+    // are less specific for finding countries
     cookie := middleware.SetCookie("answerCountryCapital", answerCountry.Name.CommonName)
     c.SetCookie(cookie)
     var passed bool = false
@@ -207,7 +187,7 @@ func getGuessCapital(c echo.Context) error {
 
 func postGuessCapital(c echo.Context) error {
 	countries := models.Countries
-    // get the target country from cookie set with getGuessCapital
+    // get the target country from cookie
     answerCookie, err := c.Cookie("answerCountryCapital")
     if err != nil {
         if err == http.ErrNoCookie {

@@ -25,7 +25,7 @@ type User struct {
 }
 
 func (u *User) String() string {
-    return fmt.Sprintf("%s\n\t%d\n\t%d\n\t%d\n\t%v",
+    return fmt.Sprintf("username = %s\nid = %d\ncountryScore = %d\ncapitalScore = %d\ncreatedAt = %v",
         u.Username, u.ID, u.CountryScore, u.CapitalScore, u.CreatedAt)
 }
 

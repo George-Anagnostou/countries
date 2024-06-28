@@ -8,10 +8,46 @@ import (
 	"sort"
 )
 
+type Payload interface {
+    SetBasePayload(BasePayload)
+}
+
+type BasePayload struct {
+	FlagEmoji string
+}
+
+func NewBasePayload() *BasePayload {
+    basePayload := &BasePayload{
+        FlagEmoji: getFlagEmoji(),
+    }
+    return basePayload
+}
+
+type UserPayload struct {
+    User *User
+    BasePayload
+}
+
+func (p *UserPayload) SetBasePayload(base BasePayload) {
+    p.BasePayload = base
+}
+
+func NewUserPayload(user *User) *UserPayload {
+    return &UserPayload{
+        User: user,
+    }
+}
+
+
 type PageData struct {
 	FlagEmoji string
 	Payload   interface{}
     User      *User
+}
+
+func CombinePayloads(specificPayload Payload, base BasePayload) Payload {
+    specificPayload.SetBasePayload(base)
+    return specificPayload
 }
 
 func NewPageData(payload ...interface{}) *PageData {
@@ -73,16 +109,6 @@ func NewCountriesPayload(countries []CountryData, answerCountry *CountryData, gu
         AnswerCountry: answerCountry,
         GuessCountry: guessCountry,
         Passed: passed,
-    }
-}
-
-type UserPayload struct {
-    User *User
-}
-
-func NewUserPayload(user *User) *UserPayload {
-    return &UserPayload{
-        User: user,
     }
 }
 
