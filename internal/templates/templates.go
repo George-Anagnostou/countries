@@ -16,7 +16,6 @@ func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Co
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
-// consider implementing FuncMap with custom functions for the templates
 func NewTemplate() *Templates {
 	return &Templates{
 		templates: template.Must(template.New("").Funcs(template.FuncMap{

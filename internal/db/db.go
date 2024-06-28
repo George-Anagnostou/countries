@@ -74,7 +74,7 @@ func GetUserByUsername(username string) (*models.User, error) {
     return user, nil
 }
 
-func GetUserByID(id int) (*models.User, error) {
+func GetUserByID(id int64) (*models.User, error) {
     user := new(models.User)
     query := `
         SELECT
