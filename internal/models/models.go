@@ -14,11 +14,13 @@ type Payload interface {
 
 type BasePayload struct {
 	FlagEmoji string
+    User *User
 }
 
-func NewBasePayload() *BasePayload {
+func NewBasePayload(user *User) *BasePayload {
     basePayload := &BasePayload{
         FlagEmoji: getFlagEmoji(),
+        User: user,
     }
     return basePayload
 }
@@ -28,36 +30,14 @@ type UserPayload struct {
     BasePayload
 }
 
-func (p *UserPayload) SetBasePayload(base BasePayload) {
-    p.BasePayload = base
-}
-
 func NewUserPayload(user *User) *UserPayload {
     return &UserPayload{
         User: user,
     }
 }
 
-
-type PageData struct {
-	FlagEmoji string
-	Payload   interface{}
-    User      *User
-}
-
-func CombinePayloads(specificPayload Payload, base BasePayload) Payload {
-    specificPayload.SetBasePayload(base)
-    return specificPayload
-}
-
-func NewPageData(payload ...interface{}) *PageData {
-    pageData := &PageData{
-        FlagEmoji: getFlagEmoji(),
-    }
-    if len(payload) == 1 {
-        pageData.Payload = payload[0]
-    }
-    return pageData
+func (p *UserPayload) SetBasePayload(base BasePayload) {
+    p.BasePayload = base
 }
 
 type CountryData struct {
@@ -70,37 +50,12 @@ type CountryData struct {
     }   `json:"name"`
 }
 
-func DefaultCountryData() *CountryData {
-    return &CountryData{
-        FlagEmoji: "",
-        Continents: []string{""},
-        Population: 0,
-        Capitals: []string{""},
-        Name: struct {
-            CommonName string `json:"common"`
-        }{
-            CommonName: "",
-        },
-    }
-}
-
-type ContinentPayload struct {
-    Continents []string
-    Countries []CountryData
-}
-
-func NewContinentPayload(continents []string, countries []CountryData) *ContinentPayload {
-    return &ContinentPayload{
-        Continents: continents,
-        Countries: countries,
-    }
-}
-
 type CountriesPayload struct {
     Countries []CountryData
     AnswerCountry *CountryData
     GuessCountry *CountryData
     Passed bool
+    BasePayload
 }
 
 func NewCountriesPayload(countries []CountryData, answerCountry *CountryData, guessCountry *CountryData, passed bool) *CountriesPayload {
@@ -110,6 +65,27 @@ func NewCountriesPayload(countries []CountryData, answerCountry *CountryData, gu
         GuessCountry: guessCountry,
         Passed: passed,
     }
+}
+
+func (p *CountriesPayload) SetBasePayload(base BasePayload) {
+    p.BasePayload = base
+}
+
+type ContinentPayload struct {
+    Continents []string
+    Countries []CountryData
+    BasePayload
+}
+
+func NewContinentPayload(continents []string, countries []CountryData) *ContinentPayload {
+    return &ContinentPayload{
+        Continents: continents,
+        Countries: countries,
+    }
+}
+
+func (p *ContinentPayload) SetBasePayload(base BasePayload) {
+    p.BasePayload = base
 }
 
 // `countries` will be used for the entire life of the server and
@@ -176,6 +152,20 @@ func GetCountryByName(name string) *CountryData {
     return DefaultCountryData()
 }
 
+func DefaultCountryData() *CountryData {
+    return &CountryData{
+        FlagEmoji: "",
+        Continents: []string{""},
+        Population: 0,
+        Capitals: []string{""},
+        Name: struct {
+            CommonName string `json:"common"`
+        }{
+            CommonName: "",
+        },
+    }
+}
+
 func GetCountryByCapital(name string) []*CountryData {
     var countries []*CountryData
     for _, country := range Countries {
@@ -231,3 +221,9 @@ func SortCountries(countries []CountryData, sortMethod string) {
 		CountriesByPopReverse(countries)
 	}
 }
+
+func CombinePayloads(specificPayload Payload, base BasePayload) Payload {
+    specificPayload.SetBasePayload(base)
+    return specificPayload
+}
+

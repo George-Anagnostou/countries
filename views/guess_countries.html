@@ -4,33 +4,33 @@
     <body>
         {{ template "header" . }}
         <h2>Guess the Country</h2>
-        {{ template "nav" }}
+        {{ template "nav" . }}
         <main>
             <div id="result-container">
-                {{ if .Payload.Passed }}
-                    <div>{{ .Payload.AnswerCountry.Name.CommonName }}</div>
+                {{ if .Passed }}
+                    <div>{{ .AnswerCountry.Name.CommonName }}</div>
                 {{ else }}
                 {{ end }}
-                <i class="country-flag-icon">{{ .Payload.AnswerCountry.FlagEmoji}}</i>
-                <p class="country-population">{{ WithCommas .Payload.AnswerCountry.Population }}</p>
+                <i class="country-flag-icon">{{ .AnswerCountry.FlagEmoji}}</i>
+                <p class="country-population">{{ WithCommas .AnswerCountry.Population }}</p>
             </div>
             <div id="guess-container">
                 <!-- render guess country -->
-                {{ if .Payload.GuessCountry }}
-                    {{ if .Payload.Passed }}
+                {{ if .GuessCountry }}
+                    {{ if .Passed }}
                         <p>Congrats! You got it right</p>
                     {{ else }}
                         <p>Wrong! You guessed:</p>
-                        {{ if .Payload.GuessCountry.Name.CommonName }}
-                            <p>{{ .Payload.GuessCountry.Name.CommonName }}</p>
+                        {{ if .GuessCountry.Name.CommonName }}
+                            <p>{{ .GuessCountry.Name.CommonName }}</p>
                         {{ else }}
                             <p>I couldn't find that country...</p>
                         {{ end }}
-                        {{ if .Payload.GuessCountry.FlagEmoji }}
-                            <i class="country-flag-icon">{{ .Payload.GuessCountry.FlagEmoji }}</i>
+                        {{ if .GuessCountry.FlagEmoji }}
+                            <i class="country-flag-icon">{{ .GuessCountry.FlagEmoji }}</i>
                         {{ end }}
-                        {{ if .Payload.GuessCountry.Population }}
-                            <p class="country-population">{{ WithCommas .Payload.GuessCountry.Population }}</p>
+                        {{ if .GuessCountry.Population }}
+                            <p class="country-population">{{ WithCommas .GuessCountry.Population }}</p>
                         {{ end }}
                     {{ end }}
                 {{ end }}
@@ -38,12 +38,12 @@
             <search>
                 <fieldset>
                     <legend>Guess the Country</legend>
-                    {{ if not .Payload.Passed }}
+                    {{ if not .Passed }}
                         <form id="guess-country-form" method="POST">
                             <label for="country-guess">Country</label>
                             <input type="text" id="country-guess" name="country-guess" list="country-list" required />
                             <datalist id="country-list">
-                                {{ range .Payload.Countries }}
+                                {{ range .Countries }}
                                 <option value="{{ .Name.CommonName }}"></option>
                                 {{ end }}
                             </datalist>
