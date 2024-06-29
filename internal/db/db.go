@@ -3,6 +3,7 @@ package db
 import (
     "database/sql"
     "errors"
+    "log"
 
     "github.com/George-Anagnostou/countries/internal/models"
 
@@ -20,8 +21,8 @@ func AddUser(username, password string) error {
     if err != nil {
         return err
     }
-    query := "INSERT INTO users (username, password) VALUES (?, ?)"
-    result, err := db.Exec(query, username, hashedPassword)
+    stmt := "INSERT INTO users (username, password) VALUES (?, ?)"
+    result, err := db.Exec(stmt, username, hashedPassword)
     if err != nil {
         return ErrInvalidRegistration
     }
@@ -54,8 +55,10 @@ func GetUserByUsername(username string) (*models.User, error) {
             id,
             username,
             password,
-            country_score,
-            capital_score,
+            longest_country_score,
+            current_country_score,
+            longest_capital_score,
+            current_capital_score,
             created_at
         FROM users
             WHERE username = ?
@@ -64,8 +67,10 @@ func GetUserByUsername(username string) (*models.User, error) {
             &user.ID,
             &user.Username,
             &user.Password,
-            &user.CountryScore,
-            &user.CapitalScore,
+            &user.LongestCountryScore,
+            &user.CurrentCountryScore,
+            &user.LongestCapitalScore,
+            &user.CurrentCapitalScore,
             &user.CreatedAt,
         )
     if err != nil {
@@ -81,8 +86,10 @@ func GetUserByID(id int64) (*models.User, error) {
             id,
             username,
             password,
-            country_score,
-            capital_score,
+            longest_country_score,
+            current_country_score,
+            longest_capital_score,
+            current_capital_score,
             created_at
     FROM users
             WHERE id = ?
@@ -91,8 +98,10 @@ func GetUserByID(id int64) (*models.User, error) {
             &user.ID,
             &user.Username,
             &user.Password,
-            &user.CountryScore,
-            &user.CapitalScore,
+            &user.LongestCountryScore,
+            &user.CurrentCountryScore,
+            &user.LongestCapitalScore,
+            &user.CurrentCapitalScore,
             &user.CreatedAt,
         )
     if err != nil {
@@ -108,4 +117,82 @@ func GetHashedPassword(username string) (string, error) {
         return "", err
     }
     return hashedPassword, nil
+}
+
+func UpdateCountryScore(userID int64, correct bool) {
+    var currentStreak, longestStreak int64
+    query := `
+        SELECT
+            current_country_score,
+            longest_country_score
+        FROM
+            users
+        WHERE
+            id = ?
+        ;`
+    row := db.QueryRow(query, userID)
+    err := row.Scan(&currentStreak, &longestStreak)
+    if err != nil {
+        log.Println("error fetching user streaks:", err)
+        return
+    }
+    if correct {
+        currentStreak++
+        if currentStreak > longestStreak {
+            longestStreak = currentStreak
+        }
+    } else {
+        currentStreak = 0
+    }
+    stmt := `
+            UPDATE
+                users
+            SET
+                current_country_score = ?,
+                longest_country_score = ?
+            WHERE id = ?
+        ;`
+    _, err = db.Exec(stmt, currentStreak, longestStreak, userID)
+    if err != nil {
+        log.Println("error logging answer:", err)
+    }
+}
+
+func UpdateCapitalScore(userID int64, correct bool) {
+    var currentStreak, longestStreak int64
+    query := `
+        SELECT
+            current_capital_score,
+            longest_capital_score
+        FROM
+            users
+        WHERE
+            id = ?
+        ;`
+    row := db.QueryRow(query, userID)
+    err := row.Scan(&currentStreak, &longestStreak)
+    if err != nil {
+        log.Println("error fetching user streaks:", err)
+        return
+    }
+    if correct {
+        currentStreak++
+        if currentStreak > longestStreak {
+            longestStreak = currentStreak
+        }
+    } else {
+        currentStreak = 0
+    }
+    stmt := `
+            UPDATE
+                users
+            SET
+                current_capital_score = ?,
+                longest_capital_score = ?
+            WHERE id = ?
+        ;`
+    _, err = db.Exec(stmt, currentStreak, longestStreak, userID)
+    if err != nil {
+        log.Println("error logging answer:", err)
+    }
 }

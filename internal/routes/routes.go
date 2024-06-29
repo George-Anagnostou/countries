@@ -1,14 +1,15 @@
 package routes
 
 import (
-    "net/http"
+	"net/http"
+	"strconv"
 
-    "github.com/George-Anagnostou/countries/internal/db"
-	"github.com/George-Anagnostou/countries/internal/models"
+	"github.com/George-Anagnostou/countries/internal/db"
 	"github.com/George-Anagnostou/countries/internal/middleware"
-    "github.com/George-Anagnostou/countries/internal/templates"
+	"github.com/George-Anagnostou/countries/internal/models"
+	"github.com/George-Anagnostou/countries/internal/templates"
 
-    "github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 )
 
@@ -33,6 +34,8 @@ func RegisterRoutes(e *echo.Echo) {
 
     e.GET("/login", getLogin)
     e.POST("/login", postLogin)
+
+    e.GET("/users/:id", getUser)
 
     e.POST("/logout", postLogout)
 
@@ -117,6 +120,26 @@ func postLogin(c echo.Context) error {
     return c.Redirect(301, "/")
 }
 
+func getUser(c echo.Context) error {
+    userIDString := c.Param("id")
+    userID, err := strconv.ParseInt(userIDString, 10, 64)
+    if err != nil {
+        return c.Redirect(301, "/")
+    }
+    queryUser, err := db.GetUserByID(userID)
+    if err != nil {
+        return echo.ErrNotFound
+    }
+    // check if the user page requested is the same
+    // as the user requesting the page
+    contextUser := getUserFromContext(c)
+    if queryUser.ID != contextUser.ID {
+        return echo.ErrUnauthorized
+    }
+    basePayload := models.NewBasePayload(contextUser)
+    return c.Render(200, "user", basePayload)
+}
+
 func postLogout(c echo.Context) error {
     sess, _ := middleware.GetSession("session", c)
     sess.Options.MaxAge = -1
@@ -142,8 +165,8 @@ func getGuessCountry(c echo.Context) error {
 	answerCountry := models.GetRandomCountry()
     var passed bool = false
     // set cookie as the country to guess
-    cookie := middleware.SetCookie("answerCountryName", answerCountry.Name.CommonName)
-    c.SetCookie(cookie)
+    answerCookie := middleware.SetCookie("answerCountryName", answerCountry.Name.CommonName)
+    c.SetCookie(answerCookie)
     countriesPayload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
     basePayload := models.NewBasePayload(getUserFromContext(c))
     payload := models.CombinePayloads(countriesPayload, *basePayload)
@@ -169,9 +192,11 @@ func postGuessCountry(c echo.Context) error {
         cookie := middleware.ResetCookie("answerCountryName")
         c.SetCookie(cookie)
     }
+    user := getUserFromContext(c)
+    db.UpdateCountryScore(user.ID, passed)
     guessCountry := models.GetCountryByName(guessCountryName)
     countriesPayload := models.NewCountriesPayload(countries, answerCountry, guessCountry, passed)
-    basePayload := models.NewBasePayload(getUserFromContext(c))
+    basePayload := models.NewBasePayload(user)
     payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_countries", payload)
 }
@@ -225,8 +250,10 @@ func postGuessCapital(c echo.Context) error {
     } else {
         guessCountry = guessCountries[0]
     }
+    user := getUserFromContext(c)
+    db.UpdateCapitalScore(user.ID, passed)
     countriesPayload := models.NewCountriesPayload(countries, answerCountry, guessCountry, passed)
-    basePayload := models.NewBasePayload(getUserFromContext(c))
+    basePayload := models.NewBasePayload(user)
     payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_capitals", payload)
 }

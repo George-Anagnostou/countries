@@ -1,17 +1,22 @@
 {{ block "user" . }}
 <!DOCTYPE html>
 <html>
+    {{ template "header" . }}
     <body>
-        {{ template "header" . }}
-        <h1>Welcome, {{ .GetUsername }}</h1>
-        {{ template "nav" }}
+        <h1>Welcome, {{ .User.Username }}</h1>
+        {{ template "nav" . }}
         <main>
             <p>High scores are calculated by the number of sequential correct guesses.</p>
             <p>Your high sores are:</p>
             <div>
-                <p>Country Guessing: {{ .GetCountryScore }}</p>
-                <p>Capital Guessing: {{ .GetCapitalScore }}</p>
+                <p>Longest Country Streak: {{ .User.LongestCountryScore }}</p>
+                <p>Current Country Streak: {{ .User.CurrentCountryScore }}</p>
+                <p>Longest Capital Streak: {{ .User.LongestCapitalScore }}</p>
+                <p>Current Capital Streak: {{ .User.CurrentCapitalScore }}</p>
             </div>
+            <form method="POST" action="/logout">
+                <button type="submit">Logout</button>
+            </form>
         </main>
     </body>
 </html>
