@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -72,10 +74,12 @@ func postRegister(c echo.Context) error {
     err := db.AddUser(username, password)
     // basePayload := models.NewBasePayload()
     if err == db.ErrInvalidRegistration {
+        log.Print(err)
         return c.Redirect(301, "/register")
     }
     if err != nil {
         // return c.Render(500, "internalServerError", basePayload)
+        log.Print(err)
         return c.Redirect(301, "/register")
     }
     return c.Redirect(301, "/login")
@@ -89,34 +93,22 @@ func getLogin(c echo.Context) error {
 func postLogin(c echo.Context) error {
     username := c.FormValue("username")
     password := c.FormValue("password")
-
-    // basePayload := models.NewBasePayload(getUserFromContext(c))
     user, err := db.AuthenticateUser(username, password)
     if err == models.ErrInvalidLogin {
-        // not the right way to handle this error...
-        return c.JSON(http.StatusUnauthorized, echo.Map{
-            "error": "invalid username or password",
-        })
+        return errors.New("routes postLogin: something went wrong with login")
     }
     if err != nil {
-        return c.JSON(http.StatusInternalServerError, echo.Map{
-            "error": "internal service error",
-        })
+        log.Println("routes postLogin: err")
+        return errors.New("routes postLogin: nil pointer deref on user?")
     }
     sess, err := middleware.GetSession("session", c)
     if err != nil {
-        // return c.Render(500, "internalServerError", basePayload)
         return c.Redirect(301, "/login")
     }
-    // log.Printf("from routes: user.ID = %d", user.ID)
     sess.Values["userID"] = user.ID
-    // log.Printf("from routes: sess.Values.userID = %v", sess.Values["userID"])
     if err = sess.Save(c.Request(), c.Response()); err != nil {
-        // return c.Render(500, "internalServerError", basePayload)
         return c.Redirect(301, "/login")
     }
-
-    // log.Printf("from routes: user logged in as %s", user.Username)
     return c.Redirect(301, "/")
 }
 
@@ -161,77 +153,80 @@ func getContinents(c echo.Context) error {
 }
 
 func getGuessCountry(c echo.Context) error {
+    user := getUserFromContext(c)
+    var answerCountry models.CountryData
+    if user != nil {
+        answerCountry = user.CurrentCountry
+    } else {
+        answerCountry = models.GetRandomCountry()
+        cookie := middleware.SetCookie("answerCountryName", answerCountry.Name.CommonName)
+        c.SetCookie(cookie)
+    }
 	countries := models.Countries
-	answerCountry := models.GetRandomCountry()
     var passed bool = false
-    // set cookie as the country to guess
-    answerCookie := middleware.SetCookie("answerCountryName", answerCountry.Name.CommonName)
-    c.SetCookie(answerCookie)
-    countriesPayload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
-    basePayload := models.NewBasePayload(getUserFromContext(c))
+    countriesPayload := models.NewCountriesPayload(countries, &answerCountry, nil, passed)
+    basePayload := models.NewBasePayload(user)
     payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_countries", payload)
 }
 
 func postGuessCountry(c echo.Context) error {
-	countries := models.Countries
-    // get the target country from cookie set with getGuessCountry
-    answerCountryCookie, err := c.Cookie("answerCountryName")
-    if err != nil {
-        if err == http.ErrNoCookie {
-            c.Redirect(301, "/guess_countries")
+    user := getUserFromContext(c)
+    var answerCountry models.CountryData
+    if user != nil {
+        answerCountry = user.CurrentCountry
+    } else {
+        answerCountryCookie, err := c.Cookie("answerCountryName")
+        if err != nil {
+            if err != http.ErrNoCookie {
+                c.Redirect(301, "/guess_countries")
+                return err
+            }
             return err
         }
-        return err
+        answerCountry = *models.GetCountryByName(answerCountryCookie.Value)
     }
-    answerCountry := models.GetCountryByName(answerCountryCookie.Value)
+	countries := models.Countries
 	guessCountryName := c.FormValue("country-guess")
     var passed bool = false
     if guessCountryName == answerCountry.Name.CommonName  {
         passed = true
-        cookie := middleware.ResetCookie("answerCountryName")
-        c.SetCookie(cookie)
+        if user != nil {
+            err := db.UpdateCurrentCountry(user)
+            if err != nil {
+                log.Println(err)
+            }
+        }
     }
-    user := getUserFromContext(c)
-    db.UpdateCountryScore(user.ID, passed)
+    if user != nil {
+        db.UpdateCountryScore(user.ID, passed)
+    }
     guessCountry := models.GetCountryByName(guessCountryName)
-    countriesPayload := models.NewCountriesPayload(countries, answerCountry, guessCountry, passed)
+    countriesPayload := models.NewCountriesPayload(countries, &answerCountry, guessCountry, passed)
     basePayload := models.NewBasePayload(user)
     payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_countries", payload)
 }
 
 func getGuessCapital(c echo.Context) error {
+    user := getUserFromContext(c)
+    answerCountry := user.CurrentCapital
 	countries := models.Countries
     // don't use countries where capital == null
-    var answerCountry = models.GetRandomCountry()
     for len(answerCountry.Capitals) < 1 {
         answerCountry = models.GetRandomCountry()
     }
-    // get cookie as the country to guess
-    // use CommonName as in getGuessCountry, since the Capitals
-    // are less specific for finding countries
-    cookie := middleware.SetCookie("answerCountryCapital", answerCountry.Name.CommonName)
-    c.SetCookie(cookie)
     var passed bool = false
-    countriesPayload := models.NewCountriesPayload(countries, answerCountry, nil, passed)
-    basePayload := models.NewBasePayload(getUserFromContext(c))
+    countriesPayload := models.NewCountriesPayload(countries, &answerCountry, nil, passed)
+    basePayload := models.NewBasePayload(user)
     payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_capitals", payload)
 }
 
 func postGuessCapital(c echo.Context) error {
+    user := getUserFromContext(c)
+    answerCountry := user.CurrentCapital
 	countries := models.Countries
-    // get the target country from cookie
-    answerCookie, err := c.Cookie("answerCountryCapital")
-    if err != nil {
-        if err == http.ErrNoCookie {
-            c.Redirect(301, "/guess_capitals")
-            return err
-        }
-        return err
-    }
-    answerCountry := models.GetCountryByName(answerCookie.Value)
 	guessCapital := c.FormValue("guess-capital")
     guessCountries := models.GetCountryByCapital(guessCapital)
     var passed bool = false
@@ -239,8 +234,10 @@ func postGuessCapital(c echo.Context) error {
         for _, capital := range answerCountry.Capitals {
             if capital == guessCapital {
                 passed = true
-                cookie := middleware.ResetCookie("answerCountryCapital")
-                c.SetCookie(cookie)
+                err := db.UpdateCurrentCountry(user)
+                if err != nil {
+                    log.Println(err)
+                }
             }
         }
     }
@@ -250,9 +247,8 @@ func postGuessCapital(c echo.Context) error {
     } else {
         guessCountry = guessCountries[0]
     }
-    user := getUserFromContext(c)
     db.UpdateCapitalScore(user.ID, passed)
-    countriesPayload := models.NewCountriesPayload(countries, answerCountry, guessCountry, passed)
+    countriesPayload := models.NewCountriesPayload(countries, &answerCountry, guessCountry, passed)
     basePayload := models.NewBasePayload(user)
     payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_capitals", payload)

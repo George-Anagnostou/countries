@@ -3,6 +3,7 @@ package db
 import (
     "database/sql"
     "errors"
+    "encoding/json"
     "log"
 
     "github.com/George-Anagnostou/countries/internal/models"
@@ -21,17 +22,34 @@ func AddUser(username, password string) error {
     if err != nil {
         return err
     }
-    stmt := "INSERT INTO users (username, password) VALUES (?, ?)"
-    result, err := db.Exec(stmt, username, hashedPassword)
+    countryJson, err := json.Marshal(models.GetRandomCountry())
     if err != nil {
-        return ErrInvalidRegistration
+        return err
+    }
+    capitalJson, err := json.Marshal(models.GetRandomCountry())
+    if err != nil {
+        return err
+    }
+    stmt := "INSERT INTO users (username, password, current_country, current_capital) VALUES (?, ?, ?, ?)"
+    result, err := db.Exec(
+        stmt,
+        username,
+        hashedPassword,
+        string(countryJson),
+        string(capitalJson),
+    )
+    if err != nil {
+        // return ErrInvalidRegistration
+        return errors.New("something immediately went wrong")
     }
     rows, err := result.RowsAffected()
     if err != nil {
-        return ErrInvalidRegistration
+        // return ErrInvalidRegistration
+        return errors.New("something went wrong getting the result")
     }
     if rows != 1 {
-        return ErrInvalidRegistration
+        // return ErrInvalidRegistration
+        return errors.New("not only 1 row was returned")
     }
     return err
 }
@@ -39,17 +57,21 @@ func AddUser(username, password string) error {
 func AuthenticateUser(username, password string) (*models.User, error) {
     user, err := GetUserByUsername(username)
     if err != nil {
-        return nil, models.ErrInvalidLogin
+        // return nil, models.ErrInvalidLogin
+        return nil, errors.New("error getting username")
     }
     err = models.CheckPassword(string(user.Password), password)
     if err != nil {
-        return nil, models.ErrInvalidLogin
+        // return nil, models.ErrInvalidLogin
+        return nil, errors.New("error checking password")
     }
     return user, nil
 }
 
 func GetUserByUsername(username string) (*models.User, error) {
-    user := new(models.User)
+    var user models.User
+    var countryJSON string
+    var capitalJSON string
     query := `
         SELECT
             id,
@@ -59,28 +81,42 @@ func GetUserByUsername(username string) (*models.User, error) {
             current_country_score,
             longest_capital_score,
             current_capital_score,
+            current_country,
+            current_capital,
             created_at
         FROM users
             WHERE username = ?
         ;`
     err := db.QueryRow(query, username).Scan(
-            &user.ID,
-            &user.Username,
-            &user.Password,
-            &user.LongestCountryScore,
-            &user.CurrentCountryScore,
-            &user.LongestCapitalScore,
-            &user.CurrentCapitalScore,
-            &user.CreatedAt,
-        )
+        &user.ID,
+        &user.Username,
+        &user.Password,
+        &user.LongestCountryScore,
+        &user.CurrentCountryScore,
+        &user.LongestCapitalScore,
+        &user.CurrentCapitalScore,
+        &countryJSON,
+        &capitalJSON,
+        &user.CreatedAt,
+    )
     if err != nil {
         return nil, err
     }
-    return user, nil
+    err = json.Unmarshal([]byte(countryJSON), &user.CurrentCountry)
+    if err != nil {
+        return nil, err
+    }
+    err = json.Unmarshal([]byte(capitalJSON), &user.CurrentCapital)
+    if err != nil {
+        return nil, err
+    }
+    return &user, nil
 }
 
 func GetUserByID(id int64) (*models.User, error) {
-    user := new(models.User)
+    var user models.User
+    var countryJSON string
+    var capitalJSON string
     query := `
         SELECT
             id,
@@ -90,24 +126,36 @@ func GetUserByID(id int64) (*models.User, error) {
             current_country_score,
             longest_capital_score,
             current_capital_score,
+            current_country,
+            current_capital,
             created_at
-    FROM users
+        FROM users
             WHERE id = ?
         ;`
     err := db.QueryRow(query, id).Scan(
-            &user.ID,
-            &user.Username,
-            &user.Password,
-            &user.LongestCountryScore,
-            &user.CurrentCountryScore,
-            &user.LongestCapitalScore,
-            &user.CurrentCapitalScore,
-            &user.CreatedAt,
-        )
+        &user.ID,
+        &user.Username,
+        &user.Password,
+        &user.LongestCountryScore,
+        &user.CurrentCountryScore,
+        &user.LongestCapitalScore,
+        &user.CurrentCapitalScore,
+        &countryJSON,
+        &capitalJSON,
+        &user.CreatedAt,
+    )
     if err != nil {
         return nil, err
     }
-    return user, nil
+    err = json.Unmarshal([]byte(countryJSON), &user.CurrentCountry)
+    if err != nil {
+        return nil, err
+    }
+    err = json.Unmarshal([]byte(capitalJSON), &user.CurrentCapital)
+    if err != nil {
+        return nil, err
+    }
+    return &user, nil
 }
 
 func GetHashedPassword(username string) (string, error) {
@@ -158,7 +206,7 @@ func UpdateCountryScore(userID int64, correct bool) {
     }
 }
 
-func UpdateCapitalScore(userID int64, correct bool) {
+func UpdateCapitalScore(userID int64, correct bool) error {
     var currentStreak, longestStreak int64
     query := `
         SELECT
@@ -173,7 +221,7 @@ func UpdateCapitalScore(userID int64, correct bool) {
     err := row.Scan(&currentStreak, &longestStreak)
     if err != nil {
         log.Println("error fetching user streaks:", err)
-        return
+        return err
     }
     if correct {
         currentStreak++
@@ -193,6 +241,42 @@ func UpdateCapitalScore(userID int64, correct bool) {
         ;`
     _, err = db.Exec(stmt, currentStreak, longestStreak, userID)
     if err != nil {
-        log.Println("error logging answer:", err)
+        return err
     }
+    return nil
+}
+
+func UpdateCurrentCountry(user *models.User) error {
+    nextCountryJSON, err := json.Marshal(models.GetRandomCountry())
+    if err != nil {
+        return err
+    }
+    stmt := `
+            UPDATE
+                users
+            SET
+                current_country = ?
+            WHERE id = ?
+        ;`
+    _, err = db.Exec(stmt, string(nextCountryJSON), user.ID)
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+func UpdateCurrentCapital(user *models.User) error {
+    nextCountryJSON, err := json.Marshal(models.GetRandomCountry())
+    stmt := `
+            UPDATE
+                users
+            SET
+                current_capital  = ?
+            WHERE id = ?
+        ;`
+    _, err = db.Exec(stmt, string(nextCountryJSON), user.ID)
+    if err != nil {
+        return err
+    }
+    return nil
 }

@@ -111,8 +111,8 @@ func getFlagEmoji() string {
 	return randFlag
 }
 
-func GetRandomCountry() *CountryData {
-    return &Countries[rand.Intn(len(Countries))]
+func GetRandomCountry() CountryData {
+    return Countries[rand.Intn(len(Countries))]
 }
 
 func CountriesByName(slice []CountryData) {

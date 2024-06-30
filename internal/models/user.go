@@ -23,6 +23,8 @@ type User struct {
     CurrentCountryScore int64
     LongestCapitalScore int64
     CurrentCapitalScore int64
+    CurrentCountry      CountryData
+    CurrentCapital      CountryData
     CreatedAt           time.Time
 }
 

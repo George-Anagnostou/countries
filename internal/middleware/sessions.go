@@ -68,10 +68,10 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
     }
 }
 
-func SetCookie(key string, name string) *http.Cookie {
+func SetCookie(key string, value string) *http.Cookie {
     cookie := new(http.Cookie)
     cookie.Name = key
-    cookie.Value = name
+    cookie.Value = value
     cookie.Expires = time.Now().Add(5 * time.Minute)
     return cookie
 }
