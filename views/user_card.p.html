@@ -3,10 +3,6 @@
     <p>
     {{ if .User }}
         <a href="/users/{{ .User.ID }}">{{ .User.Username }}'s page</a>
-    <p>Longest Country Streak: {{ .User.LongestCountryScore }}</p>
-    <p>Current Country Streak: {{ .User.CurrentCountryScore }}</p>
-    <p>Longest Capital Streak: {{ .User.LongestCapitalScore }}</p>
-    <p>Current Capital Streak: {{ .User.CurrentCapitalScore }}</p>
     {{ else }}
         <a href="/login">Login</a> |
         <a href="/register">Register</a>
