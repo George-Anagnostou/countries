@@ -3,32 +3,34 @@
 <html>
     <body>
         {{ template "header" . }}
-        <h2>The Country Guessing Site</h2>
+        <h1>The Country Guessing Site</h1>
         {{ template "nav" . }}
         <main>
-            <p>Welcome to the country guessing site. There are currently only a few
-            things to do, but hopefully you will find them interesting. Namely, the
+            <p>Welcome to my country guessing game. There are some fun things to do. The
             <a href="/search_continents">Continents</a> section is a good spot to look
-            through all of the countries in the world, filterable by continent, and the
+            through all of the countries in the world, filterable by continent. The
             <a href="/guess_countries"> Country Guesser</a> page is a simple guessing game
-            based on country flags and population. In the future, more games will be
-            added, such as a population guessing version, and hopefully a few more.</p>
+            based on country flags and population. The <a href="/guess_capitals"> Capital Guesser</a>
+            page works the same way, but you have to guess the country's capital city.
+            In the future, more games will be added, such as a population guessing version,
+            and hopefully a few more.</p>
 
             <p>Learning is largely through repetition, and it should be fun. I found
             that playing games and creating recognizable patterns and associations make
             learning not only easier, but more effective and enjoyable. I hope that
-            playing the games on this site is not only fun, but productive towards
+            playing the games on this site are not only fun, but productive towards
             learning about the countries of the world.</p>
 
             <p>This site is a little unique: it uses <em>zero</em> <code>JavaScript</code>.
             Everything is written in plain <code>HTML</code> and <code>CSS</code>,
-            and it's all delivered and handled by a simple <code>Go</code> server.</p>
+            and it's all handled by a simple <code>Go</code> server. Check it out on
+            <a href="https://github.com/George-Anagnostou/countries">Github</a>.</p>
 
             <p>The guessing games on this site use cookies to compare your guess to the
             question asked, as well as handle user sessions.</p>
 
             <p>The country data used in this site comes from
-                <a href="https://restcountries.com/">REST Countries</a>.</p>
+            <a href="https://restcountries.com/">REST Countries</a>.</p>
         </main>
     </body>
 </html>
