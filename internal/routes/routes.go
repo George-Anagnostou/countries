@@ -210,12 +210,18 @@ func postGuessCountry(c echo.Context) error {
 
 func getGuessCapital(c echo.Context) error {
     user := getUserFromContext(c)
-    answerCountry := user.CurrentCapital
-	countries := models.Countries
     // don't use countries where capital == null
-    for len(answerCountry.Capitals) < 1 {
-        answerCountry = models.GetRandomCountry()
+    var answerCountry models.CountryData
+    if user != nil {
+        answerCountry = user.CurrentCapital
+    } else {
+        for len(answerCountry.Capitals) < 1 {
+            answerCountry = models.GetRandomCountry()
+        }
+        cookie := middleware.SetCookie("answerCapitalName", answerCountry.Name.CommonName)
+        c.SetCookie(cookie)
     }
+	countries := models.Countries
     var passed bool = false
     countriesPayload := models.NewCountriesPayload(countries, &answerCountry, nil, passed)
     basePayload := models.NewBasePayload(user)
@@ -225,7 +231,20 @@ func getGuessCapital(c echo.Context) error {
 
 func postGuessCapital(c echo.Context) error {
     user := getUserFromContext(c)
-    answerCountry := user.CurrentCapital
+    var answerCountry models.CountryData
+    if user != nil {
+        answerCountry = user.CurrentCapital
+    } else {
+        answerCountryCookie, err := c.Cookie("answerCapitalName")
+        if err != nil {
+            if err != http.ErrNoCookie {
+                c.Redirect(301, "/guess_capitals")
+                return err
+            }
+            return err
+        }
+        answerCountry = *models.GetCountryByName(answerCountryCookie.Value)
+    }
 	countries := models.Countries
 	guessCapital := c.FormValue("guess-capital")
     guessCountries := models.GetCountryByCapital(guessCapital)
@@ -234,7 +253,7 @@ func postGuessCapital(c echo.Context) error {
         for _, capital := range answerCountry.Capitals {
             if capital == guessCapital {
                 passed = true
-                err := db.UpdateCurrentCountry(user)
+                err := db.UpdateCurrentCapital(user)
                 if err != nil {
                     log.Println(err)
                 }
