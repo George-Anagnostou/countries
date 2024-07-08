@@ -51,7 +51,6 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
     return func(c echo.Context) error {
         sess, err := session.Get("session", c)
         if err != nil {
-            // return err
             log.Printf("from sessions: err = %v", err)
         }
         userID, ok := sess.Values["userID"].(int64)
@@ -60,7 +59,6 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
         }
         user, err := db.GetUserByID(userID)
         if err != nil {
-            // return err
             log.Printf("from sessions: err = %q", err)
         }
         c.Set("user", user)

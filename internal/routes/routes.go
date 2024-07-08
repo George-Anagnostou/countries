@@ -99,7 +99,6 @@ func postLogin(c echo.Context) error {
     }
     if err != nil {
         log.Println("routes postLogin: err")
-        return errors.New("routes postLogin: nil pointer deref on user?")
     }
     sess, err := middleware.GetSession("session", c)
     if err != nil {

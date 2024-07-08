@@ -2,10 +2,8 @@ package models
 
 import (
     "errors"
-    // "fmt"
     "time"
 
-    // "github.com/George-Anagnostou/countries/internal/db"
     "golang.org/x/crypto/bcrypt"
 )
 
@@ -27,16 +25,6 @@ type User struct {
     CurrentCapital      CountryData
     CreatedAt           time.Time
 }
-
-// func (u *User) String() string {
-//     return fmt.Sprintf("username = %s\nid = %d\ncountryScore = %d\ncapitalScore = %d\ncreatedAt = %v",
-//         u.Username, u.ID, u.CountryScore, u.CapitalScore, u.CreatedAt)
-// }
-
-// type UserStore interface {
-//     AddUser(user *User) error
-//     GetUserByUsername(username string) (*User, error)
-// }
 
 // hashes plaintext password using bcrypt
 func HashPassword(password string) (string, error) {

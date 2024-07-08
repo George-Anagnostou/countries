@@ -181,7 +181,6 @@ func UpdateCountryScore(userID int64, correct bool) {
     row := db.QueryRow(query, userID)
     err := row.Scan(&currentStreak, &longestStreak)
     if err != nil {
-        log.Println("error fetching user streaks:", err)
         return
     }
     if correct {
@@ -220,7 +219,6 @@ func UpdateCapitalScore(userID int64, correct bool) error {
     row := db.QueryRow(query, userID)
     err := row.Scan(&currentStreak, &longestStreak)
     if err != nil {
-        log.Println("error fetching user streaks:", err)
         return err
     }
     if correct {

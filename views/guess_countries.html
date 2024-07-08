@@ -6,6 +6,11 @@
         <h1>Guess the Country</h1>
         {{ template "nav" . }}
         <main>
+            <div id="score-card">
+                <h2>Your Scores</h2>
+                <p>Longest Streak: {{ .User.LongestCountryScore }}</p>
+                <p>Current Streak: {{ .User.CurrentCountryScore }}</p>
+            </div>
             <div id="result-container">
                 {{ if .Passed }}
                 <div>{{ .AnswerCountry.Name.CommonName }}</div>
