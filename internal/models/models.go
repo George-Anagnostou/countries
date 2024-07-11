@@ -40,6 +40,21 @@ func (p *UserPayload) SetBasePayload(base BasePayload) {
     p.BasePayload = base
 }
 
+type UsersPayload struct {
+    Users []*User
+    BasePayload
+}
+
+func NewUsersPayload(users []*User) *UsersPayload {
+    return &UsersPayload{
+        Users: users,
+    }
+}
+
+func (p *UsersPayload) SetBasePayload(base BasePayload) {
+    p.BasePayload = base
+}
+
 type CountryData struct {
     FlagEmoji   string      `json:"flag"`
     Continents  []string    `json:"continents"`

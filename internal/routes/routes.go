@@ -39,6 +39,8 @@ func RegisterRoutes(e *echo.Echo) {
 
     e.GET("/users/:id", getUser)
 
+    e.GET("/leaderboard", getLeaderboard)
+
     e.POST("/logout", postLogout)
 
 	e.GET("/search_continents", getContinents)
@@ -129,6 +131,17 @@ func getUser(c echo.Context) error {
     }
     basePayload := models.NewBasePayload(contextUser)
     return c.Render(200, "user", basePayload)
+}
+
+func getLeaderboard(c echo.Context) error {
+    users, err := db.GetAllUsers()
+    if err != nil {
+        c.Render(500, "internalServerError", models.NewBasePayload(getUserFromContext(c)))
+    }
+    usersPayload := models.NewUsersPayload(users)
+    basePayload := models.NewBasePayload(getUserFromContext(c))
+    payload := models.CombinePayloads(usersPayload, *basePayload)
+    return c.Render(200, "leaderboard", payload)
 }
 
 func postLogout(c echo.Context) error {

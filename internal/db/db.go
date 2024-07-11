@@ -121,7 +121,6 @@ func GetUserByID(id int64) (*models.User, error) {
         SELECT
             id,
             username,
-            password,
             longest_country_score,
             current_country_score,
             longest_capital_score,
@@ -135,7 +134,6 @@ func GetUserByID(id int64) (*models.User, error) {
     err := db.QueryRow(query, id).Scan(
         &user.ID,
         &user.Username,
-        &user.Password,
         &user.LongestCountryScore,
         &user.CurrentCountryScore,
         &user.LongestCapitalScore,
@@ -156,6 +154,57 @@ func GetUserByID(id int64) (*models.User, error) {
         return nil, err
     }
     return &user, nil
+}
+
+func GetAllUsers() ([]*models.User, error) {
+    query := `
+        SELECT
+            id,
+            username,
+            longest_country_score,
+            current_country_score,
+            longest_capital_score,
+            current_capital_score,
+            current_country,
+            current_capital,
+            created_at
+        FROM users
+        ;`
+    rows, err := db.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    var users []*models.User
+    for rows.Next() {
+        var user models.User
+        var countryJSON string
+        var capitalJSON string
+        err := rows.Scan(
+            &user.ID,
+            &user.Username,
+            &user.LongestCountryScore,
+            &user.CurrentCountryScore,
+            &user.LongestCapitalScore,
+            &user.CurrentCapitalScore,
+            &countryJSON,
+            &capitalJSON,
+            &user.CreatedAt,
+        )
+        if err != nil {
+            return users, err
+        }
+        err = json.Unmarshal([]byte(countryJSON), &user.CurrentCountry)
+        if err != nil {
+            return nil, err
+        }
+        err = json.Unmarshal([]byte(capitalJSON), &user.CurrentCapital)
+        if err != nil {
+            return nil, err
+        }
+        users = append(users, &user)
+    }
+    return users, nil
 }
 
 func GetHashedPassword(username string) (string, error) {
