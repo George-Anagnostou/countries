@@ -6,11 +6,13 @@
         <h1>Guess the Capital</h1>
         {{ template "nav" . }}
         <main>
-            <div id="score-card">
-                <h2>Your Scores</h2>
-                <p>Longest Streak: {{ .User.LongestCapitalScore }}</p>
-                <p>Current Streak: {{ .User.CurrentCapitalScore }}</p>
-            </div>
+            {{ if .User }}
+                <div id="score-card">
+                    <h2>Your Scores</h2>
+                    <p>Longest Streak: {{ .User.LongestCapitalScore }}</p>
+                    <p>Current Streak: {{ .User.CurrentCapitalScore }}</p>
+                </div>
+            {{ end }}
             <div id="result-container">
                 {{ if .Passed }}
                     <p>{{ .AnswerCountry.Name.CommonName }}</p>

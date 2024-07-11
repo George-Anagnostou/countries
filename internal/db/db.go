@@ -39,17 +39,14 @@ func AddUser(username, password string) error {
         string(capitalJson),
     )
     if err != nil {
-        // return ErrInvalidRegistration
-        return errors.New("something immediately went wrong")
+        return ErrInvalidRegistration
     }
     rows, err := result.RowsAffected()
     if err != nil {
-        // return ErrInvalidRegistration
-        return errors.New("something went wrong getting the result")
+        return ErrInvalidRegistration
     }
     if rows != 1 {
-        // return ErrInvalidRegistration
-        return errors.New("not only 1 row was returned")
+        return ErrInvalidRegistration
     }
     return err
 }
@@ -57,13 +54,11 @@ func AddUser(username, password string) error {
 func AuthenticateUser(username, password string) (*models.User, error) {
     user, err := GetUserByUsername(username)
     if err != nil {
-        // return nil, models.ErrInvalidLogin
-        return nil, errors.New("error getting username")
+        return nil, models.ErrInvalidLogin
     }
     err = models.CheckPassword(string(user.Password), password)
     if err != nil {
-        // return nil, models.ErrInvalidLogin
-        return nil, errors.New("error checking password")
+        return nil, models.ErrInvalidLogin
     }
     return user, nil
 }

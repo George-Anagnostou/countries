@@ -15,12 +15,18 @@ type Payload interface {
 type BasePayload struct {
 	FlagEmoji string
     User *User
+    Error error
+}
+
+func (b *BasePayload) AddError(err error) {
+    b.Error = err
 }
 
 func NewBasePayload(user *User) *BasePayload {
     basePayload := &BasePayload{
         FlagEmoji: getFlagEmoji(),
         User: user,
+        Error: nil,
     }
     return basePayload
 }

@@ -23,7 +23,7 @@ func InitSessionStore() echo.MiddlewareFunc {
 
     sessionKey := os.Getenv("SESSION_KEY")
     if sessionKey == "" {
-        log.Fatal("SESSION_KEY not set")
+        log.Fatal("session key not set")
     }
 
     keyBytes, err := base64.StdEncoding.DecodeString(sessionKey)
@@ -51,15 +51,15 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
     return func(c echo.Context) error {
         sess, err := session.Get("session", c)
         if err != nil {
-            log.Printf("from sessions: err = %v", err)
+            log.Printf("error getting session: %v", err)
         }
         userID, ok := sess.Values["userID"].(int64)
         if !ok {
-            log.Printf("from sessions: err = %v", err)
+            log.Printf("error getting user session: %v", err)
         }
         user, err := db.GetUserByID(userID)
         if err != nil {
-            log.Printf("from sessions: err = %q", err)
+            log.Printf("error getting user: %v", err)
         }
         c.Set("user", user)
         return next(c)

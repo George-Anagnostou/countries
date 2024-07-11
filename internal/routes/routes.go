@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -74,15 +73,14 @@ func postRegister(c echo.Context) error {
     username := c.FormValue("username")
     password := c.FormValue("password")
     err := db.AddUser(username, password)
-    // basePayload := models.NewBasePayload()
+    basePayload := models.NewBasePayload(getUserFromContext(c))
     if err == db.ErrInvalidRegistration {
-        log.Print(err)
-        return c.Redirect(301, "/register")
+        basePayload.AddError(err)
+        return c.Render(200, "register", basePayload)
     }
     if err != nil {
-        // return c.Render(500, "internalServerError", basePayload)
-        log.Print(err)
-        return c.Redirect(301, "/register")
+        basePayload.AddError(err)
+        return c.Render(200, "register", basePayload)
     }
     return c.Redirect(301, "/login")
 }
@@ -96,19 +94,24 @@ func postLogin(c echo.Context) error {
     username := c.FormValue("username")
     password := c.FormValue("password")
     user, err := db.AuthenticateUser(username, password)
+    basePayload := models.NewBasePayload(getUserFromContext(c))
     if err == models.ErrInvalidLogin {
-        return errors.New("routes postLogin: something went wrong with login")
+        basePayload.AddError(err)
+        return c.Render(200, "login", basePayload)
     }
     if err != nil {
-        log.Println("routes postLogin: err")
+        basePayload.AddError(err)
+        return c.Render(200, "login", basePayload)
     }
     sess, err := middleware.GetSession("session", c)
     if err != nil {
-        return c.Redirect(301, "/login")
+        basePayload.AddError(err)
+        return c.Render(200, "login", basePayload)
     }
     sess.Values["userID"] = user.ID
     if err = sess.Save(c.Request(), c.Response()); err != nil {
-        return c.Redirect(301, "/login")
+        basePayload.AddError(err)
+        return c.Render(200, "login", basePayload)
     }
     return c.Redirect(301, "/")
 }
@@ -116,30 +119,34 @@ func postLogin(c echo.Context) error {
 func getUser(c echo.Context) error {
     userIDString := c.Param("id")
     userID, err := strconv.ParseInt(userIDString, 10, 64)
+    contextUser := getUserFromContext(c)
+    basePayload := models.NewBasePayload(contextUser)
     if err != nil {
         return c.Redirect(301, "/")
     }
     queryUser, err := db.GetUserByID(userID)
     if err != nil {
-        return echo.ErrNotFound
+        basePayload.AddError(err)
+        return c.Render(200, "login", basePayload)
     }
-    // check if the user page requested is the same
-    // as the user requesting the page
-    contextUser := getUserFromContext(c)
+    if queryUser == nil || contextUser == nil {
+        basePayload.AddError(models.ErrUserNotFound)
+        return c.Render(200, "login", basePayload)
+    }
     if queryUser.ID != contextUser.ID {
-        return echo.ErrUnauthorized
+        basePayload.AddError(echo.ErrUnauthorized)
+        return c.Render(200, "login", basePayload)
     }
-    basePayload := models.NewBasePayload(contextUser)
     return c.Render(200, "user", basePayload)
 }
 
 func getLeaderboard(c echo.Context) error {
+    basePayload := models.NewBasePayload(getUserFromContext(c))
     users, err := db.GetAllUsers()
     if err != nil {
-        c.Render(500, "internalServerError", models.NewBasePayload(getUserFromContext(c)))
+        c.Redirect(301, "/")
     }
     usersPayload := models.NewUsersPayload(users)
-    basePayload := models.NewBasePayload(getUserFromContext(c))
     payload := models.CombinePayloads(usersPayload, *basePayload)
     return c.Render(200, "leaderboard", payload)
 }

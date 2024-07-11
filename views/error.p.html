@@ -1,0 +1,10 @@
+{{ block "error" . }}
+    {{ if .Error }}
+    <dialog id="error" autofocus open>
+            <p>{{ .Error }}</p>
+        <form method="dialog">
+            <button>Ok</button>
+        </form>
+    </dialog>
+    {{ end }}
+{{ end }}

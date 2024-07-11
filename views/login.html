@@ -6,6 +6,7 @@
         <h1>Login</h1>
         {{ template "nav" }}
         <main>
+            {{ template "error" . }}
             <form id="login-form" method="POST">
                 <input type="text" id="username" name="username" required placeholder="Username" />
                 <input type="password" id="password" name="password" placeholder="Password" />
