@@ -1,54 +1,91 @@
 package routes
 
 import (
+    "database/sql"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/George-Anagnostou/countries/internal/db"
 	"github.com/George-Anagnostou/countries/internal/middleware"
 	"github.com/George-Anagnostou/countries/internal/models"
 	"github.com/George-Anagnostou/countries/internal/templates"
+    "github.com/George-Anagnostou/countries/internal/repositories"
+    "github.com/George-Anagnostou/countries/internal/services"
 
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 )
 
 func Start() {
+
+    var db, err = sql.Open("sqlite3", "./data/countries.db")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    userRepo := &repositories.SQLiteUserRepository{DB: db}
+    userService := &services.UserService{UserRepo: userRepo}
+
 	e := echo.New()
     e.Static("/static", "static")
 	e.Use(echoMiddleware.Logger())
     e.Use(echoMiddleware.Recover())
     e.Use(middleware.InitSessionStore())
-    e.Use(middleware.AuthMiddleware)
+    e.Use(middleware.AuthMiddleware(*userService))
 	e.Renderer = templates.NewTemplate()
 
-    RegisterRoutes(e)
+    RegisterRoutes(e, *userService)
 	e.Logger.Fatal(e.Start(":8000"))
 }
 
-func RegisterRoutes(e *echo.Echo) {
-	e.GET("/", getHome)
+func RegisterRoutes(e *echo.Echo, userService services.UserService) {
+    e.GET("/", func(c echo.Context) error {
+        return getHome(c)
+    })
 
-    e.GET("/register", getRegister)
-    e.POST("/register", postRegister)
+    e.GET("/register", func(c echo.Context) error {
+        return getRegister(c)
+    })
+    e.POST("/register", func(c echo.Context) error {
+        return postRegister(c, userService)
+    })
 
-    e.GET("/login", getLogin)
-    e.POST("/login", postLogin)
+    e.GET("/login", func(c echo.Context) error {
+        return getLogin(c)
+    })
+    e.POST("/login", func(c echo.Context) error {
+        return postLogin(c, userService)
+    })
 
-    e.GET("/users/:id", getUser)
+    e.GET("/users/:id", func(c echo.Context) error {
+        return getUser(c, userService)
+    })
 
-    e.GET("/leaderboard", getLeaderboard)
+    e.GET("/leaderboard", func(c echo.Context) error {
+        return getLeaderboard(c, userService)
+    })
 
-    e.POST("/logout", postLogout)
+    e.POST("/logout", func(c echo.Context) error {
+        return postLogout(c)
+    })
 
-	e.GET("/search_continents", getContinents)
+    e.GET("/search_continents", func(c echo.Context) error {
+        return getContinents(c, userService)
+    })
 
-	e.GET("/guess_countries", getGuessCountry)
-	e.POST("/guess_countries", postGuessCountry)
+    e.GET("/guess_countries", func(c echo.Context) error {
+        return getGuessCountry(c, userService)
+    })
+    e.POST("/guess_countries", func(c echo.Context) error {
+        return postGuessCountry(c, userService)
+    })
 
-	e.GET("/guess_capitals", getGuessCapital)
-	e.POST("/guess_capitals", postGuessCapital)
+    e.GET("/guess_capitals", func(c echo.Context) error {
+        return getGuessCapital(c, userService)
+    })
+    e.POST("/guess_capitals", func(c echo.Context) error {
+        return postGuessCapital(c, userService)
+    })
 }
 
 func getUserFromContext(c echo.Context) *models.User {
@@ -69,12 +106,12 @@ func getRegister(c echo.Context) error {
 	return c.Render(200, "register", basePayload)
 }
 
-func postRegister(c echo.Context) error {
+func postRegister(c echo.Context, userService services.UserService) error {
+    basePayload := models.NewBasePayload(getUserFromContext(c))
     username := c.FormValue("username")
     password := c.FormValue("password")
-    err := db.AddUser(username, password)
-    basePayload := models.NewBasePayload(getUserFromContext(c))
-    if err == db.ErrInvalidRegistration {
+    err := userService.AddUser(username, password)
+    if err == repositories.ErrInvalidRegistration {
         basePayload.AddError(err)
         return c.Render(200, "register", basePayload)
     }
@@ -90,11 +127,11 @@ func getLogin(c echo.Context) error {
 	return c.Render(200, "login", basePayload)
 }
 
-func postLogin(c echo.Context) error {
+func postLogin(c echo.Context, userService services.UserService) error {
+    basePayload := models.NewBasePayload(getUserFromContext(c))
     username := c.FormValue("username")
     password := c.FormValue("password")
-    user, err := db.AuthenticateUser(username, password)
-    basePayload := models.NewBasePayload(getUserFromContext(c))
+    user, err := userService.AuthenticateUser(username, password)
     if err == models.ErrInvalidLogin {
         basePayload.AddError(err)
         return c.Render(200, "login", basePayload)
@@ -116,7 +153,7 @@ func postLogin(c echo.Context) error {
     return c.Redirect(301, "/")
 }
 
-func getUser(c echo.Context) error {
+func getUser(c echo.Context, userService services.UserService) error {
     userIDString := c.Param("id")
     userID, err := strconv.ParseInt(userIDString, 10, 64)
     contextUser := getUserFromContext(c)
@@ -124,7 +161,7 @@ func getUser(c echo.Context) error {
     if err != nil {
         return c.Redirect(301, "/")
     }
-    queryUser, err := db.GetUserByID(userID)
+    queryUser, err := userService.GetUserByID(userID)
     if err != nil {
         basePayload.AddError(err)
         return c.Render(200, "login", basePayload)
@@ -140,9 +177,9 @@ func getUser(c echo.Context) error {
     return c.Render(200, "user", basePayload)
 }
 
-func getLeaderboard(c echo.Context) error {
+func getLeaderboard(c echo.Context, userService services.UserService) error {
     basePayload := models.NewBasePayload(getUserFromContext(c))
-    users, err := db.GetAllUsers()
+    users, err := userService.GetAllUsers()
     if err != nil {
         c.Redirect(301, "/")
     }
@@ -158,7 +195,8 @@ func postLogout(c echo.Context) error {
     return c.Redirect(301, "/")
 }
 
-func getContinents(c echo.Context) error {
+func getContinents(c echo.Context, userService services.UserService) error {
+    basePayload := models.NewBasePayload(getUserFromContext(c))
     continents := models.GetAllContinents()
     allCountries := models.GetAllCountries()
     filter := c.FormValue("continent")
@@ -166,13 +204,13 @@ func getContinents(c echo.Context) error {
 	sortMethod := c.FormValue("sort-method")
     models.SortCountries(countries, sortMethod)
     continentsPayload := models.NewContinentPayload(continents, countries)
-    basePayload := models.NewBasePayload(getUserFromContext(c))
     payload := models.CombinePayloads(continentsPayload, *basePayload)
 	return c.Render(200, "search_continents", payload)
 }
 
-func getGuessCountry(c echo.Context) error {
+func getGuessCountry(c echo.Context, userService services.UserService) error {
     user := getUserFromContext(c)
+    basePayload := models.NewBasePayload(user)
     var answerCountry models.CountryData
     if user != nil {
         answerCountry = user.CurrentCountry
@@ -184,13 +222,13 @@ func getGuessCountry(c echo.Context) error {
 	countries := models.Countries
     var passed bool = false
     countriesPayload := models.NewCountriesPayload(countries, &answerCountry, nil, passed)
-    basePayload := models.NewBasePayload(user)
     payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_countries", payload)
 }
 
-func postGuessCountry(c echo.Context) error {
+func postGuessCountry(c echo.Context, userService services.UserService) error {
     user := getUserFromContext(c)
+    basePayload := models.NewBasePayload(user)
     var answerCountry models.CountryData
     if user != nil {
         answerCountry = user.CurrentCountry
@@ -211,24 +249,24 @@ func postGuessCountry(c echo.Context) error {
     if guessCountryName == answerCountry.Name.CommonName  {
         passed = true
         if user != nil {
-            err := db.UpdateCurrentCountry(user)
+            err := userService.UpdateCurrentCountry(user)
             if err != nil {
                 log.Println(err)
             }
         }
     }
     if user != nil {
-        db.UpdateCountryScore(user.ID, passed)
+        userService.UpdateCountryScore(user.ID, passed)
     }
     guessCountry := models.GetCountryByName(guessCountryName)
     countriesPayload := models.NewCountriesPayload(countries, &answerCountry, guessCountry, passed)
-    basePayload := models.NewBasePayload(user)
     payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_countries", payload)
 }
 
-func getGuessCapital(c echo.Context) error {
+func getGuessCapital(c echo.Context, userService services.UserService) error {
     user := getUserFromContext(c)
+    basePayload := models.NewBasePayload(user)
     // don't use countries where capital == null
     var answerCountry models.CountryData
     if user != nil {
@@ -243,13 +281,13 @@ func getGuessCapital(c echo.Context) error {
 	countries := models.Countries
     var passed bool = false
     countriesPayload := models.NewCountriesPayload(countries, &answerCountry, nil, passed)
-    basePayload := models.NewBasePayload(user)
     payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_capitals", payload)
 }
 
-func postGuessCapital(c echo.Context) error {
+func postGuessCapital(c echo.Context, userService services.UserService) error {
     user := getUserFromContext(c)
+    basePayload := models.NewBasePayload(user)
     var answerCountry models.CountryData
     if user != nil {
         answerCountry = user.CurrentCapital
@@ -272,7 +310,7 @@ func postGuessCapital(c echo.Context) error {
         for _, capital := range answerCountry.Capitals {
             if capital == guessCapital {
                 passed = true
-                err := db.UpdateCurrentCapital(user)
+                err := userService.UpdateCurrentCapital(user)
                 if err != nil {
                     log.Println(err)
                 }
@@ -285,9 +323,8 @@ func postGuessCapital(c echo.Context) error {
     } else {
         guessCountry = guessCountries[0]
     }
-    db.UpdateCapitalScore(user.ID, passed)
+    userService.UpdateCapitalScore(user.ID, passed)
     countriesPayload := models.NewCountriesPayload(countries, &answerCountry, guessCountry, passed)
-    basePayload := models.NewBasePayload(user)
     payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_capitals", payload)
 }

@@ -7,7 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/George-Anagnostou/countries/internal/db"
+    "github.com/George-Anagnostou/countries/internal/services"
+
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo-contrib/session"
@@ -47,22 +48,18 @@ func GetSession(sessionName string, c echo.Context) (*sessions.Session, error) {
     return sess, nil
 }
 
-func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-    return func(c echo.Context) error {
-        sess, err := session.Get("session", c)
-        if err != nil {
-            log.Printf("error getting session: %v", err)
+func AuthMiddleware(userService services.UserService) echo.MiddlewareFunc {
+    return func(next echo.HandlerFunc) echo.HandlerFunc {
+        return func(c echo.Context) error {
+            sess, err := session.Get("session", c)
+            if err != nil {
+                log.Printf("error getting session: %v", err)
+            }
+            userID, _ := sess.Values["userID"].(int64)
+            user, _ := userService.GetUserByID(userID)
+            c.Set("user", user)
+            return next(c)
         }
-        userID, ok := sess.Values["userID"].(int64)
-        if !ok {
-            log.Printf("error getting user session: %v", err)
-        }
-        user, err := db.GetUserByID(userID)
-        if err != nil {
-            log.Printf("error getting user: %v", err)
-        }
-        c.Set("user", user)
-        return next(c)
     }
 }
 

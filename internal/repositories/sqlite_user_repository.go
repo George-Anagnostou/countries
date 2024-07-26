@@ -1,23 +1,31 @@
-package db
+package repositories
 
 import (
-    "database/sql"
-    "errors"
-    "encoding/json"
-    "log"
+	"database/sql"
+	"encoding/json"
+	"os"
 
-    "github.com/George-Anagnostou/countries/internal/models"
+	"github.com/George-Anagnostou/countries/internal/models"
 
-    _ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-var db, err = sql.Open("sqlite3", "./data/countries.db")
+type SQLiteUserRepository struct {
+    DB *sql.DB
+}
 
-var (
-	ErrInvalidRegistration = errors.New("invalid registration")
-)
+func NewSQLiteUserRepository() *SQLiteUserRepository {
+    databaseFile := os.Getenv("SQLITE_FILE")
+    db, err := sql.Open("sqlite3", databaseFile)
+    if err != nil {
+        panic(err)
+    }
+    return &SQLiteUserRepository{
+        DB: db,
+    }
+}
 
-func AddUser(username, password string) error {
+func (r *SQLiteUserRepository) AddUser(username, password string) error {
     hashedPassword, err := models.HashPassword(password)
     if err != nil {
         return err
@@ -31,7 +39,7 @@ func AddUser(username, password string) error {
         return err
     }
     stmt := "INSERT INTO users (username, password, current_country, current_capital) VALUES (?, ?, ?, ?)"
-    result, err := db.Exec(
+    result, err := r.DB.Exec(
         stmt,
         username,
         hashedPassword,
@@ -51,8 +59,8 @@ func AddUser(username, password string) error {
     return err
 }
 
-func AuthenticateUser(username, password string) (*models.User, error) {
-    user, err := GetUserByUsername(username)
+func (r *SQLiteUserRepository) AuthenticateUser(username, password string) (*models.User, error) {
+    user, err := r.GetUserByUsername(username)
     if err != nil {
         return nil, models.ErrInvalidLogin
     }
@@ -63,7 +71,7 @@ func AuthenticateUser(username, password string) (*models.User, error) {
     return user, nil
 }
 
-func GetUserByUsername(username string) (*models.User, error) {
+func (r *SQLiteUserRepository) GetUserByUsername(username string) (*models.User, error) {
     var user models.User
     var countryJSON string
     var capitalJSON string
@@ -82,7 +90,7 @@ func GetUserByUsername(username string) (*models.User, error) {
         FROM users
             WHERE username = ?
         ;`
-    err := db.QueryRow(query, username).Scan(
+    err := r.DB.QueryRow(query, username).Scan(
         &user.ID,
         &user.Username,
         &user.Password,
@@ -108,7 +116,7 @@ func GetUserByUsername(username string) (*models.User, error) {
     return &user, nil
 }
 
-func GetUserByID(id int64) (*models.User, error) {
+func (r *SQLiteUserRepository) GetUserByID(id int64) (*models.User, error) {
     var user models.User
     var countryJSON string
     var capitalJSON string
@@ -126,7 +134,7 @@ func GetUserByID(id int64) (*models.User, error) {
         FROM users
             WHERE id = ?
         ;`
-    err := db.QueryRow(query, id).Scan(
+    err := r.DB.QueryRow(query, id).Scan(
         &user.ID,
         &user.Username,
         &user.LongestCountryScore,
@@ -151,7 +159,7 @@ func GetUserByID(id int64) (*models.User, error) {
     return &user, nil
 }
 
-func GetAllUsers() ([]*models.User, error) {
+func (r *SQLiteUserRepository) GetAllUsers() ([]*models.User, error) {
     query := `
         SELECT
             id,
@@ -165,7 +173,7 @@ func GetAllUsers() ([]*models.User, error) {
             created_at
         FROM users
         ;`
-    rows, err := db.Query(query)
+    rows, err := r.DB.Query(query)
     if err != nil {
         return nil, err
     }
@@ -202,16 +210,16 @@ func GetAllUsers() ([]*models.User, error) {
     return users, nil
 }
 
-func GetHashedPassword(username string) (string, error) {
+func (r *SQLiteUserRepository) GetHashedPassword(username string) (string, error) {
     var hashedPassword string
-    err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&hashedPassword)
+    err := r.DB.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&hashedPassword)
     if err != nil {
         return "", err
     }
     return hashedPassword, nil
 }
 
-func UpdateCountryScore(userID int64, correct bool) {
+func (r *SQLiteUserRepository) UpdateCountryScore(userID int64, correct bool) error {
     var currentStreak, longestStreak int64
     query := `
         SELECT
@@ -222,10 +230,10 @@ func UpdateCountryScore(userID int64, correct bool) {
         WHERE
             id = ?
         ;`
-    row := db.QueryRow(query, userID)
+    row := r.DB.QueryRow(query, userID)
     err := row.Scan(&currentStreak, &longestStreak)
     if err != nil {
-        return
+        return err
     }
     if correct {
         currentStreak++
@@ -243,13 +251,14 @@ func UpdateCountryScore(userID int64, correct bool) {
                 longest_country_score = ?
             WHERE id = ?
         ;`
-    _, err = db.Exec(stmt, currentStreak, longestStreak, userID)
+    _, err = r.DB.Exec(stmt, currentStreak, longestStreak, userID)
     if err != nil {
-        log.Println("error logging answer:", err)
+        return err
     }
+    return nil
 }
 
-func UpdateCapitalScore(userID int64, correct bool) error {
+func (r *SQLiteUserRepository) UpdateCapitalScore(userID int64, correct bool) error {
     var currentStreak, longestStreak int64
     query := `
         SELECT
@@ -260,7 +269,7 @@ func UpdateCapitalScore(userID int64, correct bool) error {
         WHERE
             id = ?
         ;`
-    row := db.QueryRow(query, userID)
+    row := r.DB.QueryRow(query, userID)
     err := row.Scan(&currentStreak, &longestStreak)
     if err != nil {
         return err
@@ -281,14 +290,14 @@ func UpdateCapitalScore(userID int64, correct bool) error {
                 longest_capital_score = ?
             WHERE id = ?
         ;`
-    _, err = db.Exec(stmt, currentStreak, longestStreak, userID)
+    _, err = r.DB.Exec(stmt, currentStreak, longestStreak, userID)
     if err != nil {
         return err
     }
     return nil
 }
 
-func UpdateCurrentCountry(user *models.User) error {
+func (r *SQLiteUserRepository) UpdateCurrentCountry(user *models.User) error {
     nextCountryJSON, err := json.Marshal(models.GetRandomCountry())
     if err != nil {
         return err
@@ -300,14 +309,14 @@ func UpdateCurrentCountry(user *models.User) error {
                 current_country = ?
             WHERE id = ?
         ;`
-    _, err = db.Exec(stmt, string(nextCountryJSON), user.ID)
+    _, err = r.DB.Exec(stmt, string(nextCountryJSON), user.ID)
     if err != nil {
         return err
     }
     return nil
 }
 
-func UpdateCurrentCapital(user *models.User) error {
+func (r *SQLiteUserRepository) UpdateCurrentCapital(user *models.User) error {
     nextCountryJSON, err := json.Marshal(models.GetRandomCountry())
     stmt := `
             UPDATE
@@ -316,7 +325,7 @@ func UpdateCurrentCapital(user *models.User) error {
                 current_capital  = ?
             WHERE id = ?
         ;`
-    _, err = db.Exec(stmt, string(nextCountryJSON), user.ID)
+    _, err = r.DB.Exec(stmt, string(nextCountryJSON), user.ID)
     if err != nil {
         return err
     }
