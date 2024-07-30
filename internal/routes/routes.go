@@ -213,7 +213,7 @@ func getGuessCountry(c echo.Context) error {
     basePayload := models.NewBasePayload(user)
     var answerCountry models.CountryData
     if user != nil {
-        answerCountry = user.CurrentCountry
+        answerCountry = *models.GetCountryByName(user.CurrentCountry)
     } else {
         answerCountry = models.GetRandomCountry()
         cookie := middleware.SetCookie("answerCountryName", answerCountry.Name.CommonName)
@@ -231,7 +231,7 @@ func postGuessCountry(c echo.Context, userService services.UserService) error {
     basePayload := models.NewBasePayload(user)
     var answerCountry models.CountryData
     if user != nil {
-        answerCountry = user.CurrentCountry
+        answerCountry = *models.GetCountryByName(user.CurrentCountry)
     } else {
         answerCountryCookie, err := c.Cookie("answerCountryName")
         if err != nil {
@@ -270,7 +270,7 @@ func getGuessCapital(c echo.Context) error {
     // don't use countries where capital == null
     var answerCountry models.CountryData
     if user != nil {
-        answerCountry = user.CurrentCapital
+        answerCountry = *models.GetCountryByName(user.CurrentCapital)
     } else {
         for len(answerCountry.Capitals) < 1 {
             answerCountry = models.GetRandomCountry()
@@ -290,7 +290,7 @@ func postGuessCapital(c echo.Context, userService services.UserService) error {
     basePayload := models.NewBasePayload(user)
     var answerCountry models.CountryData
     if user != nil {
-        answerCountry = user.CurrentCapital
+        answerCountry = *models.GetCountryByName(user.CurrentCapital)
     } else {
         answerCountryCookie, err := c.Cookie("answerCapitalName")
         if err != nil {

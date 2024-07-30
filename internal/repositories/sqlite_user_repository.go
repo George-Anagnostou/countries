@@ -73,8 +73,6 @@ func (r *SQLiteUserRepository) AuthenticateUser(username, password string) (*mod
 
 func (r *SQLiteUserRepository) GetUserByUsername(username string) (*models.User, error) {
     var user models.User
-    var countryJSON string
-    var capitalJSON string
     query := `
         SELECT
             id,
@@ -98,18 +96,10 @@ func (r *SQLiteUserRepository) GetUserByUsername(username string) (*models.User,
         &user.CurrentCountryScore,
         &user.LongestCapitalScore,
         &user.CurrentCapitalScore,
-        &countryJSON,
-        &capitalJSON,
+        &user.CurrentCountry,
+        &user.CurrentCapital,
         &user.CreatedAt,
     )
-    if err != nil {
-        return nil, err
-    }
-    err = json.Unmarshal([]byte(countryJSON), &user.CurrentCountry)
-    if err != nil {
-        return nil, err
-    }
-    err = json.Unmarshal([]byte(capitalJSON), &user.CurrentCapital)
     if err != nil {
         return nil, err
     }
@@ -118,8 +108,6 @@ func (r *SQLiteUserRepository) GetUserByUsername(username string) (*models.User,
 
 func (r *SQLiteUserRepository) GetUserByID(id int64) (*models.User, error) {
     var user models.User
-    var countryJSON string
-    var capitalJSON string
     query := `
         SELECT
             id,
@@ -141,18 +129,10 @@ func (r *SQLiteUserRepository) GetUserByID(id int64) (*models.User, error) {
         &user.CurrentCountryScore,
         &user.LongestCapitalScore,
         &user.CurrentCapitalScore,
-        &countryJSON,
-        &capitalJSON,
+        &user.CurrentCountry,
+        &user.CurrentCapital,
         &user.CreatedAt,
     )
-    if err != nil {
-        return nil, err
-    }
-    err = json.Unmarshal([]byte(countryJSON), &user.CurrentCountry)
-    if err != nil {
-        return nil, err
-    }
-    err = json.Unmarshal([]byte(capitalJSON), &user.CurrentCapital)
     if err != nil {
         return nil, err
     }
@@ -181,8 +161,6 @@ func (r *SQLiteUserRepository) GetAllUsers() ([]*models.User, error) {
     var users []*models.User
     for rows.Next() {
         var user models.User
-        var countryJSON string
-        var capitalJSON string
         err := rows.Scan(
             &user.ID,
             &user.Username,
@@ -190,20 +168,12 @@ func (r *SQLiteUserRepository) GetAllUsers() ([]*models.User, error) {
             &user.CurrentCountryScore,
             &user.LongestCapitalScore,
             &user.CurrentCapitalScore,
-            &countryJSON,
-            &capitalJSON,
+            &user.CurrentCountry,
+            &user.CurrentCapital,
             &user.CreatedAt,
         )
         if err != nil {
             return users, err
-        }
-        err = json.Unmarshal([]byte(countryJSON), &user.CurrentCountry)
-        if err != nil {
-            return nil, err
-        }
-        err = json.Unmarshal([]byte(capitalJSON), &user.CurrentCapital)
-        if err != nil {
-            return nil, err
         }
         users = append(users, &user)
     }
@@ -298,7 +268,7 @@ func (r *SQLiteUserRepository) UpdateCapitalScore(userID int64, correct bool) er
 }
 
 func (r *SQLiteUserRepository) UpdateCurrentCountry(user *models.User) error {
-    nextCountryJSON, err := json.Marshal(models.GetRandomCountry())
+    nextCountry, err := json.Marshal(models.GetRandomCountry().Name.CommonName)
     if err != nil {
         return err
     }
@@ -309,7 +279,7 @@ func (r *SQLiteUserRepository) UpdateCurrentCountry(user *models.User) error {
                 current_country = ?
             WHERE id = ?
         ;`
-    _, err = r.DB.Exec(stmt, string(nextCountryJSON), user.ID)
+    _, err = r.DB.Exec(stmt, nextCountry, user.ID)
     if err != nil {
         return err
     }
@@ -317,7 +287,7 @@ func (r *SQLiteUserRepository) UpdateCurrentCountry(user *models.User) error {
 }
 
 func (r *SQLiteUserRepository) UpdateCurrentCapital(user *models.User) error {
-    nextCountryJSON, err := json.Marshal(models.GetRandomCountry())
+    nextCountry, err := json.Marshal(models.GetRandomCountry().Name.CommonName)
     stmt := `
             UPDATE
                 users
@@ -325,7 +295,7 @@ func (r *SQLiteUserRepository) UpdateCurrentCapital(user *models.User) error {
                 current_capital  = ?
             WHERE id = ?
         ;`
-    _, err = r.DB.Exec(stmt, string(nextCountryJSON), user.ID)
+    _, err = r.DB.Exec(stmt, nextCountry, user.ID)
     if err != nil {
         return err
     }
