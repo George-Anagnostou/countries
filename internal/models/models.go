@@ -9,104 +9,104 @@ import (
 )
 
 type Payload interface {
-    SetBasePayload(BasePayload)
+	SetBasePayload(BasePayload)
 }
 
 type BasePayload struct {
 	FlagEmoji string
-    User *User
-    Error error
+	User      *User
+	Error     error
 }
 
 func (b *BasePayload) AddError(err error) {
-    b.Error = err
+	b.Error = err
 }
 
 func NewBasePayload(user *User) *BasePayload {
-    basePayload := &BasePayload{
-        FlagEmoji: getFlagEmoji(),
-        User: user,
-        Error: nil,
-    }
-    return basePayload
+	basePayload := &BasePayload{
+		FlagEmoji: getFlagEmoji(),
+		User:      user,
+		Error:     nil,
+	}
+	return basePayload
 }
 
 type UserPayload struct {
-    User *User
-    BasePayload
+	User *User
+	BasePayload
 }
 
 func NewUserPayload(user *User) *UserPayload {
-    return &UserPayload{
-        User: user,
-    }
+	return &UserPayload{
+		User: user,
+	}
 }
 
 func (p *UserPayload) SetBasePayload(base BasePayload) {
-    p.BasePayload = base
+	p.BasePayload = base
 }
 
 type UsersPayload struct {
-    Users []*User
-    BasePayload
+	Users []*User
+	BasePayload
 }
 
 func NewUsersPayload(users []*User) *UsersPayload {
-    return &UsersPayload{
-        Users: users,
-    }
+	return &UsersPayload{
+		Users: users,
+	}
 }
 
 func (p *UsersPayload) SetBasePayload(base BasePayload) {
-    p.BasePayload = base
+	p.BasePayload = base
 }
 
 type CountryData struct {
-    FlagEmoji   string      `json:"flag"`
-    Continents  []string    `json:"continents"`
-    Population  int         `json:"population"`
-    Capitals    []string    `json:"capital"`
-    Name struct {
-        CommonName string   `json:"common"`
-    }   `json:"name"`
+	FlagEmoji  string   `json:"flag"`
+	Continents []string `json:"continents"`
+	Population int      `json:"population"`
+	Capitals   []string `json:"capital"`
+	Name       struct {
+		CommonName string `json:"common"`
+	} `json:"name"`
 }
 
 type CountriesPayload struct {
-    Countries []CountryData
-    AnswerCountry *CountryData
-    GuessCountry *CountryData
-    Passed bool
-    BasePayload
+	Countries     []CountryData
+	AnswerCountry *CountryData
+	GuessCountry  *CountryData
+	Passed        bool
+	BasePayload
 }
 
 func NewCountriesPayload(countries []CountryData, answerCountry *CountryData, guessCountry *CountryData, passed bool) *CountriesPayload {
-    return &CountriesPayload{
-        Countries: countries,
-        AnswerCountry: answerCountry,
-        GuessCountry: guessCountry,
-        Passed: passed,
-    }
+	return &CountriesPayload{
+		Countries:     countries,
+		AnswerCountry: answerCountry,
+		GuessCountry:  guessCountry,
+		Passed:        passed,
+	}
 }
 
 func (p *CountriesPayload) SetBasePayload(base BasePayload) {
-    p.BasePayload = base
+	p.BasePayload = base
 }
 
 type ContinentPayload struct {
-    Continents []string
-    Countries []CountryData
-    BasePayload
+	Continents []string
+	Countries  []CountryData
+	BasePayload
 }
 
 func NewContinentPayload(continents []string, countries []CountryData) *ContinentPayload {
-    return &ContinentPayload{
-        Continents: continents,
-        Countries: countries,
-    }
+	return &ContinentPayload{
+		Continents: continents,
+		Countries:  countries,
+	}
 }
 
 func (p *ContinentPayload) SetBasePayload(base BasePayload) {
-    p.BasePayload = base
+	p.BasePayload = base
 }
 
 // `countries` will be used for the entire life of the server and
@@ -133,70 +133,70 @@ func getFlagEmoji() string {
 }
 
 func GetRandomCountry() CountryData {
-    return Countries[rand.Intn(len(Countries))]
+	return Countries[rand.Intn(len(Countries))]
 }
 
 func CountriesByName(slice []CountryData) {
-    sort.Slice(slice, func(i, j int) bool {
-        return slice[i].Name.CommonName < slice[j].Name.CommonName
-    })
+	sort.Slice(slice, func(i, j int) bool {
+		return slice[i].Name.CommonName < slice[j].Name.CommonName
+	})
 }
 
 func CountriesByNameReverse(slice []CountryData) {
-    sort.Slice(slice, func(i, j int) bool {
-        return slice[i].Name.CommonName > slice[j].Name.CommonName
-    })
+	sort.Slice(slice, func(i, j int) bool {
+		return slice[i].Name.CommonName > slice[j].Name.CommonName
+	})
 }
 
 func CountriesByPop(slice []CountryData) {
-    sort.Slice(slice, func(i, j int) bool {
-        return slice[i].Population < slice[j].Population
-    })
+	sort.Slice(slice, func(i, j int) bool {
+		return slice[i].Population < slice[j].Population
+	})
 }
 
 func CountriesByPopReverse(slice []CountryData) {
-    sort.Slice(slice, func(i, j int) bool {
-        return slice[i].Population > slice[j].Population
-    })
+	sort.Slice(slice, func(i, j int) bool {
+		return slice[i].Population > slice[j].Population
+	})
 }
 
 func GetAllCountries() []CountryData {
-    return Countries
+	return Countries
 }
 
 func GetCountryByName(name string) *CountryData {
-    for _, country := range Countries {
-        if name == country.Name.CommonName {
-            return &country
-        }
-    }
-    return DefaultCountryData()
+	for _, country := range Countries {
+		if name == country.Name.CommonName {
+			return &country
+		}
+	}
+	return DefaultCountryData()
 }
 
 func DefaultCountryData() *CountryData {
-    return &CountryData{
-        FlagEmoji: "",
-        Continents: []string{""},
-        Population: 0,
-        Capitals: []string{""},
-        Name: struct {
-            CommonName string `json:"common"`
-        }{
-            CommonName: "",
-        },
-    }
+	return &CountryData{
+		FlagEmoji:  "",
+		Continents: []string{""},
+		Population: 0,
+		Capitals:   []string{""},
+		Name: struct {
+			CommonName string `json:"common"`
+		}{
+			CommonName: "",
+		},
+	}
 }
 
 func GetCountryByCapital(name string) []*CountryData {
-    var countries []*CountryData
-    for _, country := range Countries {
-        for _, capital := range country.Capitals {
-            if name == capital {
-                countries = append(countries, &country)
-            }
-        }
-    }
-    return countries
+	var countries []*CountryData
+	for _, country := range Countries {
+		for _, capital := range country.Capitals {
+			if name == capital {
+				countries = append(countries, &country)
+			}
+		}
+	}
+	return countries
 }
 
 func GetAllContinents() []string {
@@ -211,7 +211,7 @@ func GetAllContinents() []string {
 			}
 		}
 	}
-    return continents
+	return continents
 }
 
 func FilterCountriesByContinent(countries []CountryData, filter string) []CountryData {
@@ -227,7 +227,7 @@ func FilterCountriesByContinent(countries []CountryData, filter string) []Countr
 			}
 		}
 	}
-    return filteredCountries
+	return filteredCountries
 }
 
 func SortCountries(countries []CountryData, sortMethod string) {
@@ -244,7 +244,6 @@ func SortCountries(countries []CountryData, sortMethod string) {
 }
 
 func CombinePayloads(specificPayload Payload, base BasePayload) Payload {
-    specificPayload.SetBasePayload(base)
-    return specificPayload
+	specificPayload.SetBasePayload(base)
+	return specificPayload
 }
-
