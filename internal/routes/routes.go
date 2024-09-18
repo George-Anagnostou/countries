@@ -86,6 +86,13 @@ func RegisterRoutes(e *echo.Echo, userService services.UserService) {
 	e.POST("/guess_capitals", func(c echo.Context) error {
 		return postGuessCapital(c, userService)
 	})
+
+	e.POST("/skip_country", func(c echo.Context) error {
+		return postSkipCountry(c, userService)
+	})
+	e.POST("/skip_capital", func(c echo.Context) error {
+		return postSkipCapital(c, userService)
+	})
 }
 
 func getUserFromContext(c echo.Context) *models.User {
@@ -320,4 +327,24 @@ func postGuessCapital(c echo.Context, userService services.UserService) error {
 	countriesPayload := models.NewCountriesPayload(countries, &answerCountry, guessCountry, passed)
 	payload := models.CombinePayloads(countriesPayload, *basePayload)
 	return c.Render(200, "guess_capitals", payload)
+}
+
+func postSkipCountry(c echo.Context, userService services.UserService) error {
+	user := getUserFromContext(c)
+	if user != nil {
+		userService.UpdateCountryScore(user.ID, false)
+		userService.UpdateCurrentCountry(user)
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/guess_countries")
+}
+
+func postSkipCapital(c echo.Context, userService services.UserService) error {
+	user := getUserFromContext(c)
+	if user != nil {
+		userService.UpdateCapitalScore(user.ID, false)
+		userService.UpdateCurrentCapital(user)
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/guess_capitals")
 }
