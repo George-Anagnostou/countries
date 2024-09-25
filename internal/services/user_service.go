@@ -9,6 +9,10 @@ type UserService struct {
 	UserRepo repositories.UserRepository
 }
 
+func (s *UserService) Initialize() error {
+	return s.Initialize()
+}
+
 func (s *UserService) AddUser(username, password string) error {
 	return s.UserRepo.AddUser(username, password)
 }

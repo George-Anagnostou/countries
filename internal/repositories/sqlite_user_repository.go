@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"database/sql"
-	"encoding/json"
 	"os"
 
 	"github.com/George-Anagnostou/countries/internal/models"
@@ -25,16 +24,26 @@ func NewSQLiteUserRepository() *SQLiteUserRepository {
 	}
 }
 
+func (r *SQLiteUserRepository) Initialize() error {
+	_, err := r.DB.Exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username                TEXT NOT NULL UNIQUE,
+            password                TEXT NOT NULL,
+            longest_country_score   TEXT NOT NULL DEFAULT 0,
+            current_country_score   TEXT NOT NULL DEFAULT 0,
+            longest_capital_score   TEXT NOT NULL DEFAULT 0,
+            current_capital_score   TEXT NOT NULL DEFAULT 0,
+            current_country         TEXT NOT NULL,
+            current_capital         TEXT NOT NULL,
+            created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );`)
+
+	return err
+}
+
 func (r *SQLiteUserRepository) AddUser(username, password string) error {
 	hashedPassword, err := models.HashPassword(password)
-	if err != nil {
-		return err
-	}
-	countryJson, err := json.Marshal(models.GetRandomCountry())
-	if err != nil {
-		return err
-	}
-	capitalJson, err := json.Marshal(models.GetRandomCountry())
 	if err != nil {
 		return err
 	}
@@ -43,8 +52,8 @@ func (r *SQLiteUserRepository) AddUser(username, password string) error {
 		stmt,
 		username,
 		hashedPassword,
-		string(countryJson),
-		string(capitalJson),
+		models.GetRandomCountry().Name.CommonName,
+		models.GetRandomCountry().Name.CommonName,
 	)
 	if err != nil {
 		return ErrInvalidRegistration
@@ -268,10 +277,6 @@ func (r *SQLiteUserRepository) UpdateCapitalScore(userID int64, correct bool) er
 }
 
 func (r *SQLiteUserRepository) UpdateCurrentCountry(user *models.User) error {
-	nextCountry, err := json.Marshal(models.GetRandomCountry().Name.CommonName)
-	if err != nil {
-		return err
-	}
 	stmt := `
             UPDATE
                 users
@@ -279,7 +284,7 @@ func (r *SQLiteUserRepository) UpdateCurrentCountry(user *models.User) error {
                 current_country = ?
             WHERE id = ?
         ;`
-	_, err = r.DB.Exec(stmt, nextCountry, user.ID)
+	_, err := r.DB.Exec(stmt, models.GetRandomCountry().Name.CommonName, user.ID)
 	if err != nil {
 		return err
 	}
@@ -287,7 +292,6 @@ func (r *SQLiteUserRepository) UpdateCurrentCountry(user *models.User) error {
 }
 
 func (r *SQLiteUserRepository) UpdateCurrentCapital(user *models.User) error {
-	nextCountry, err := json.Marshal(models.GetRandomCountry().Name.CommonName)
 	stmt := `
             UPDATE
                 users
@@ -295,7 +299,7 @@ func (r *SQLiteUserRepository) UpdateCurrentCapital(user *models.User) error {
                 current_capital  = ?
             WHERE id = ?
         ;`
-	_, err = r.DB.Exec(stmt, nextCountry, user.ID)
+	_, err := r.DB.Exec(stmt, models.GetRandomCountry().Name.CommonName, user.ID)
 	if err != nil {
 		return err
 	}

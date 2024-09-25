@@ -24,6 +24,7 @@ func Start() {
 	}
 
 	userRepo := &repositories.SQLiteUserRepository{DB: db}
+	userRepo.Initialize()
 	userService := &services.UserService{UserRepo: userRepo}
 
 	e := echo.New()
@@ -253,7 +254,13 @@ func postGuessCountry(c echo.Context, userService services.UserService) error {
 	countries := models.Countries
 	guessCountryName := c.FormValue("country-guess")
 
-	var passed bool = guessCountryName == answerCountry.Name.CommonName
+	var passed = false
+	if guessCountryName == answerCountry.Name.CommonName {
+		passed = true
+		if user != nil {
+			userService.UpdateCurrentCountry(user)
+		}
+	}
 
 	if user != nil {
 		userService.UpdateCountryScore(user.ID, passed)

@@ -11,6 +11,7 @@ var (
 )
 
 type UserRepository interface {
+	Initialize() error
 	AddUser(username, password string) error
 	AuthenticateUser(username, password string) (*models.User, error)
 	GetUserByUsername(username string) (*models.User, error)

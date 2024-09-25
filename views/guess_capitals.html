@@ -27,9 +27,9 @@
                 <!-- render guess country -->
                 {{ if .GuessCountry }}
                     {{ if .Passed }}
-                        <p>Congrats! You got it right</p>
+                        <p style="color:green;">Correct! You got it right</p>
                     {{ else }}
-                        <p>Wrong! You guessed:</p>
+                        <p style="color:red;">Wrong! You guessed:</p>
                         {{ if .GuessCountry.Name.CommonName }}
                             <p>{{ .GuessCountry.Name.CommonName }}</p>
                             <i class="country-flag-icon">{{ .GuessCountry.FlagEmoji }}</i>
@@ -56,13 +56,15 @@
                             </datalist>
                             <input type="submit" value="Submit Guess"/>
                         </form>
+                        <form id="give-up-form" action="/skip_capital" method="POST">
+                            <input id="give-up-submit" type="submit" value="Give Up!"/>
+                        </form>
                     {{ end }}
+                    {{ if .Passed }}
                     <form id="next-guess-form" method="GET">
                         <input id="next-guess-submit" type="submit" value="Next Guess"/>
                     </form>
-                    <form id="give-up-form" action="/skip_capital" method="POST">
-                        <input id="give-up-submit" type="submit" value="Give Up!"/>
-                    </form>
+                    {{ end }}
                 </fieldset>
             </search>
         </main>
