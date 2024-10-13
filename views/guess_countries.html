@@ -1,26 +1,20 @@
 {{ block "guess_countries" . }}
 <!DOCTYPE html>
 <html>
+    {{ template "header" . }}
     <body>
-        {{ template "header" . }}
         <h1>Guess the Country</h1>
         {{ template "nav" . }}
+        {{ template "user-card" . }}
         <main>
-            {{ if .User }}
-                <div id="score-card">
-                    <h2>Your Scores</h2>
-                    <p>Longest Streak: {{ .User.LongestCountryScore }}</p>
-                    <p>Current Streak: {{ .User.CurrentCountryScore }}</p>
-                </div>
-            {{ end }}
-            <div id="result-container">
+            <div class="flag-container">
                 {{ if .Passed }}
                 <div>{{ .AnswerCountry.Name.CommonName }}</div>
                 {{ end }}
                 <i class="country-flag-icon">{{ .AnswerCountry.FlagEmoji}}</i>
                 <p class="country-population">Population: {{ WithCommas .AnswerCountry.Population }}</p>
             </div>
-            <div id="guess-container">
+            <div class="flag-container">
                 <!-- render guess country -->
                 {{ if .GuessCountry }}
                     {{ if .Passed }}
@@ -49,11 +43,13 @@
                                 <option value="{{ .Name.CommonName }}"></option>
                                 {{ end }}
                             </datalist>
-                            <input type="submit" value="Submit Guess"/>
                         </form>
-                        <form id="give-up-form" action="/skip_country" method="POST">
-                            <input id="give-up-submit" type="submit" value="Give Up!"/>
-                        </form>
+                        <div class="button-container">
+                            <input type="submit" form="guess-country-form" value="Submit Guess"/>
+                            <form id="give-up-form" action="/skip_country" method="POST">
+                                <input id="give-up-submit" type="submit" value="Give Up!"/>
+                            </form>
+                        </div>
                     {{ end }}
                     {{ if .Passed }}
                         <form id="next-guess-form" method="GET">
@@ -62,6 +58,20 @@
                     {{ end }}
                 </fieldset>
             </search>
+            {{ if .User }}
+                <div class="score-item">
+                    <p><strong>Longest Country Streak:</strong> {{ .User.LongestCountryScore }} </p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: {{ .User.LongestCountryScore }}%;"></div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <p><strong>Current Country Streak:</strong> {{ .User.CurrentCountryScore }} </p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: {{ .User.CurrentCountryScore }}%;"></div>
+                    </div>
+                </div>
+            {{ end }}
         </main>
     </body>
 </html>

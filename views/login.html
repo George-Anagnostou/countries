@@ -1,10 +1,11 @@
 {{ block "login" . }}
 <!DOCTYPE html>
 <html>
+    {{ template "header" . }}
     <body>
-        {{ template "header" . }}
         <h1>Login</h1>
-        {{ template "nav" }}
+        {{ template "nav" . }}
+        {{ template "user-card" . }}
         <main>
             {{ template "error" . }}
             <form id="login-form" method="POST">

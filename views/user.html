@@ -5,17 +5,38 @@
     <body>
         <h1>Welcome, {{ .User.Username }}</h1>
         {{ template "nav" . }}
+        {{ template "user-card" . }}
         <main>
             <p>High scores are calculated by the number of sequential correct guesses.</p>
-            <p>Your high sores are:</p>
-            <div>
-                <p>Longest Country Streak: {{ .User.LongestCountryScore }}</p>
-                <p>Current Country Streak: {{ .User.CurrentCountryScore }}</p>
-                <p>Longest Capital Streak: {{ .User.LongestCapitalScore }}</p>
-                <p>Current Capital Streak: {{ .User.CurrentCapitalScore }}</p>
+            <div class="user-scores-card">
+                <h2>Your High Scores</h2>
+                <div class="score-item">
+                    <p><strong>Longest Country Streak:</strong> {{ .User.LongestCountryScore }} </p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: {{ .User.LongestCountryScore }}%;"></div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <p><strong>Current Country Streak:</strong> {{ .User.CurrentCountryScore }} </p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: {{ .User.CurrentCountryScore }}%;"></div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <p><strong>Longest Capital Streak:</strong> {{ .User.LongestCapitalScore }} </p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: {{ .User.LongestCapitalScore }}%;"></div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <p><strong>Current Capital Streak:</strong> {{ .User.CurrentCapitalScore }} </p>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: {{ .User.CurrentCountryScore }}%;"></div>
+                    </div>
+                </div>
             </div>
-            <form method="POST" action="/logout">
-                <button type="submit">Logout</button>
+            <form class="logout-form" method="POST" action="/logout">
+                <input type="submit" value="Logout">
             </form>
         </main>
     </body>

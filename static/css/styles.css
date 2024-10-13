@@ -1,108 +1,270 @@
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
-  font-size: 100%;
-  width: 150px;
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+h1, h2 {
+    color: #333;
+    text-align: center;
+    padding: 20px 0;
+}
+
+h1 {
+    font-size: 2em;
+}
+
+h2 {
+    font-size: 1.5em;
+}
+
+main {
+    width: 80%;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+p {
+    font-size: 1.1em;
+    line-height: 1.6;
 }
 
 nav {
-    border-bottom: 1px solid black;
+    background-color: #222;
+    color: white;
+    padding: 10px;
+    text-align: center;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 20px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.2em;
+}
+
+nav ul li a:hover {
+    text-decoration: underline;
+}
+
+#user-card {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 5px;
+    color: #333;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    position: absolute;
+    top: 20px;
+    right: 20px;
     display: flex;
-    justify-content: space-between;
-}
-
-nav li {
-    display: inline-block;
-}
-
-nav li:not(:last-child)::after {
-    display: inline-block;
-    content: "|";
-    font-weight: bold;
-    padding: 0 3px;
-}
-
-#country-container {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 1rem;
-    width: auto;
-}
-
-#fetch-continents-form {
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-}
-
-.country-item {
-    flex: 1;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: top;
     align-items: center;
-    background: #ccc;
+}
+
+#user-card .separator {
+    margin: 0 10px;
+}
+
+.country-card {
+    border: 1px solid #ddd;
+    background-color: #fafafa;
+    padding: 10px;
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+}
+
+.country-card div {
+    margin-right: 15px;
+    font-size: 1.2em;
+}
+
+.country-card i {
+    font-size: 2em;
+}
+
+.country-population {
+    color: #555;
 }
 
 .country-flag-icon {
-    padding-top: 5px;
-    font-size: 3em;
-}
-
-.country-item .country-name {
-    padding: 5px;
-    text-align: center;
-}
-
-.country-item .country-population {
-    padding: 5px;
-    text-align: center;
-}
-
-form {
-    max-width: 400px;
-    margin: 0;
-    padding: 20px;
-    border: 1px solid #ccc;
-}
-
-label {
-    display: block;
+    font-size: 100px;
+    display: inline-block;
     margin-bottom: 10px;
 }
 
-dialog#error {
-    background-color: red;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-dialog#error::backdrop {
-    background: rgba(0, 0, 0, 0.4);
-}
-
-#error form {
+.flag-container {
     display: flex;
     flex-direction: column;
     align-items: center;
+    text-align: center;
+    justify-content: center;
 }
 
-#error button {
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
     margin-top: 10px;
-    padding: 10px 20px;
-    background-color: white;
-    color: red;
-    border: none;
+}
+
+input[type="text"], input[type="password"] {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
     border-radius: 4px;
+    font-size: 1.1em;
+}
+
+input[type="submit"] {
+    background-color: transparent;
+    color: green;
+    border: 2px solid green;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.button-container input[type="submit"] {
+    margin-right: 10px;
+}
+
+.button-container input[type="submit"]:last-child {
+    margin-right: 0;
+}
+
+#give-up-submit {
+    border: 2px solid red;
+    color: red;
+}
+
+input[type="submit"]:hover {
+    background-color: green;
+    color: white
+}
+
+#give-up-submit:hover {
+    background-color: red;
+    color: white;
+}
+
+input[type="submit"]:disabled {
+    background-color: #ccc;
+}
+
+dialog#error {
+    background-color: #ffdddd;
+    color: #d8000c;
+    padding: 20px;
+    border: 1px solid #d8000c;
+    border-radius: 4px;
+    text-align: center;
+}
+
+dialog#error button {
+    background-color: #d8000c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
     cursor: pointer;
 }
 
-#error button:hover {
+#score-card {
     background-color: #f1f1f1;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 5px;
+}
+
+#score-card h2 {
+    margin-bottom: 10px;
+}
+
+#score-card p {
+    font-size: 1.2em;
+    margin: 5px 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+thead {
+    background-color: #333;
+    color: white;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+caption {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.user-scores-card {
+    background-color: #fafafa;
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.score-item {
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+    height: 20px;
+}
+
+.progress {
+    height: 100%;
+    background-color: #fcaf50;
+    border-radius: 10px;
+}
+
+.logout-form input[type="submit"] {
+    background-color: #d3d3d3;
+    color: black;
+    border: none;
+}
+
+.logout-form input[type="submit"]:hover {
+    background-color: #a9a9a9;
+    color: black;
+    border: none;
 }

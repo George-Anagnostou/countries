@@ -1,10 +1,11 @@
 {{ block "register" . }}
 <!DOCTYPE html>
 <html>
+    {{ template "header" . }}
     <body>
-        {{ template "header" . }}
         <h1>Register an Account</h1>
         {{ template "nav" }}
+        {{ template "user-card" . }}
         <main>
             {{ template "error" . }}
             <form id="register-form" method="POST">

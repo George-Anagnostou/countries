@@ -1,12 +1,11 @@
 {{ block "user-card" . }}
 <div id="user-card">
-    <p>
     {{ if .User }}
         <a href="/users/{{ .User.ID }}">{{ .User.Username }}'s page</a>
     {{ else }}
-        <a href="/login">Login</a> |
+        <a href="/login">Login</a>
+        <span class="separator">|</span>
         <a href="/register">Register</a>
     {{ end }}
-    </p>
 </div>
 {{ end }}

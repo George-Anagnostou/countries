@@ -1,10 +1,11 @@
 {{ block "home" . }}
 <!DOCTYPE html>
 <html>
+    {{ template "header" . }}
     <body>
-        {{ template "header" . }}
-        <h1>The Country Guessing Site</h1>
+        <h1>The Country Guessing Game</h1>
         {{ template "nav" . }}
+        {{ template "user-card" . }}
         <main>
             <p>Welcome to my country guessing game. The <a href="/search_continents">Continents</a>
             section is a good spot to look through all of the countries in the world,
