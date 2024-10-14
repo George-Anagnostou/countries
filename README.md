@@ -14,6 +14,6 @@ This site is written in [`Go`](https://go.dev/) using the [`echo`](https://echo.
 
 [X] Leaderboard
 
-[ ] Skip Quesiton
+[X] Skip Quesiton
 
 [ ] Population Guesser
