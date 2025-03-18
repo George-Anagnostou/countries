@@ -1,6 +1,6 @@
 module github.com/George-Anagnostou/countries
 
-go 1.23
+go 1.24
 
 require (
 	github.com/gorilla/sessions v1.3.0
